@@ -16,7 +16,7 @@ En este repositorio encontrarán:
 * El vocabulario original (voc_pry.txt) fue construido a partir de los archivos conjuntos (Train y Test).
 * La reducción del vocabulario tal y como se propone en la notebook de este repositorio, asume que sólo las palabras que se conservan deben de utilizarse tanto para el entrenamiento como para la prueba (respuestas a preguntas).
 * A partir de la notebook proporcionada, se sugiere seguir la metodología vista en clase, utilizando como enfoque de solución algo similar al modelo de filtrado de Spam.
-* Deben de ser capaces de calcular las distribuciones de su modelo Cojunta mediante una descomposición). 
+* Deben de ser capaces de calcular las distribuciones de su modelo (descomposición de la distribución conjunta). 
 * Donde puede haber dificultades es a la hora de la inferencia, debido a la alta dimensionalidad del espacio de variables. 
 
 ## Entregables del proyecto:
