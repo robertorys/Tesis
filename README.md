@@ -13,6 +13,9 @@ En este repositorio encontrarán:
 * Los archivos de prueba (carpeta Test) son los que deben de utilizar para responder a las preguntas planteadas como parte del proyecto.
 
 ## Notas importantes:
+* La notebook se puede ejecutar directamente dando click en el archivo aquí arriba y luego click en la liga: "Open in Colab".
+* Deben subir los scripts de trabajo y el archivo del vocabulario original directamente a colab.
+* *Las carpetas Train y Test se subirán automáticamente al correr las celdas de la notebook*
 * El vocabulario original (voc_pry.txt) fue construido a partir de los archivos conjuntos (Train y Test).
 * La reducción del vocabulario tal y como se propone en la notebook de este repositorio, asume que sólo las palabras que se conservan deben de utilizarse tanto para el entrenamiento como para la prueba (respuestas a preguntas).
 * A partir de la notebook proporcionada, se sugiere seguir la metodología vista en clase, utilizando como enfoque de solución algo similar al modelo de filtrado de Spam.
