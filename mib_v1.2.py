@@ -1,5 +1,5 @@
 #==============================================================================
-#title          :mib_v2.py
+#title          :mib_v1.2.py
 #description    :Motor de inferencia bayesiano para variables discretas.
 #version        : 1.2
 #python_version :3.10.12
@@ -127,15 +127,15 @@ class Distrib():
         else:
             print("Llave no valida")
     
-    def get_all_P(self):
-        """ Obtener todas los prabilidades,
+    def get_all_P(self) -> list:
+        """ Obtener todas los prabilidades.
 
         Returns:
-            list : lista de las probabilidades.
+            list: lista de las probabilidades.
         """
         return [self.tabla[key] for key in self.tabla.keys()]
     
-    def to_Frame(self):
+    def to_Frame(self) -> pd.DataFrame:
         print('Creating DataFrame for: ', self.name)
         columnas=[self.name]
         indice=list(self.tabla.keys())
@@ -143,9 +143,61 @@ class Distrib():
         df=pd.DataFrame(registros, columns = columnas, index = indice)
         return df
 
-    def _print(self):
+    def _print(self) -> None:
         print('Printing: ',self.name)
         for k in self.tabla.keys():
             print('{0}:{1} '.format(k,self.tabla[k]),end=' ')
         print('\n')
 
+
+class JoinDistrb():
+    """ Distribución Conjunta; Tabla de probabilidad de una descomposición
+    condicional siguiendo la regla del producto.
+    
+    Atributos:
+        name (str): Nombre de la distribución.
+        vars (list): Lista de variables, objetos de tipo Var, (entrada).
+        descomp: lista de distribuciones marginales y condicionales. La lista se ordena por orden ascendente de la longitud del nombre de cada distribución.
+        lable_to_var: Diccionario donde la llave es el nombre de los objetos Var, que se encuentran en la lista vars, y su valor es el objeto.
+    """
+    #=================================================================================
+    # *No se calculan las posibilidades de valores de entrada, solo sirve para
+    #  estructurar el cálculo a partir de distribuciones marginales y condicionales.
+    #=================================================================================
+    def __init__(self, name: str, variables: list, descomp: list) -> None:
+        self.name = name
+        self.vars = variables
+        self.label_to_var = {}
+        self.ID = self
+        
+        for v in self.vars:
+            self.label_to_var[v.name] = v
+
+        descomp.sort(key = lambda x: len(x.name), reverse = True)
+        self.descomp = descomp
+    
+    # ------ ** Dependencia con clase Question ** ------- #
+    def get_P(self):
+        Q = None
+    
+    def _print(self):
+        for distrib in self.descomp:
+            print('{0} : {1}'.format(distrib.name, distrib.tabla))
+    
+    def to_Frame(slef):
+        slef.ID = None
+            
+class Question():
+    """Inferencia probabilista mediante una pregunta a la Conjunta.
+    
+    Atributos:
+        joint: Distribución conjunta (objeto); p.e. P_AB
+    """
+    #=================================================================================
+    # NOTA: las variables se dividen en los siguientes sub-conjuntos:
+    # - KNOWN: variables cuyos valores de probabilidad son conocidos.
+    # - UNKNOWN: variables cuyos valores son deconocidos.
+    # - SEARCHED: variables cuyos valores nos interesa conocer (query)
+    #=================================================================================
+    def __init__(self, joint) -> None:
+        self.joint = 
