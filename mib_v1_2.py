@@ -251,7 +251,7 @@ def filter(keys: list, v: list, thevars: list) -> list:
         
         if foundMatch:
             return m 
-    return None
+    return m
 
 def filter_rec(candidates: list, variables: list, v: tuple) -> list:
     """_summary_
@@ -259,7 +259,7 @@ def filter_rec(candidates: list, variables: list, v: tuple) -> list:
     Args:
         candidates (list): Espacio de búsqueda.
         variables (list): Las variables son términos de filtrado.
-        v (_type_): Llave de una variable.
+        v (tuple): Llave de una variable.
     """
     n = len(v)
     
@@ -461,10 +461,32 @@ def compute_conditional_probs(dico_Y: dict, dico_X: dict, searched: list, known:
         dico[k] = dO
     
     return dico
+                   
+def carga_tabla_cond(var, entrada: list, indep: list, tabla: dict) -> dict:
+    """Función para cargar valores de probabilidad condicional en un diccionario.
+
+    Args:
+        var (Var): Apuntador a la variable de salida (objeto tipo Var).
+        entrada (list): n-tuplas con combinaciones de los valores de entrada.
+        indep (list): Variables (tipo Var) independientes (entrada)
+        tabla (dict): Valores de probabilidad de la salida.
     
+    Returns:
+        dict: Valores de probabilidad para var.
+    """
+    dico = {}
+    
+    salidas,keys = genera_llaves_cond(var,entrada,indep)
+    
+    for k,v in zip(keys,list(tabla.values())):
+        tab = {}
+        for i,s in enumerate(salidas):
+            tab[s] = v[i]
+        dico[k] = tab
+    
+    return dico
+
 #----------- Estructuras de datos del motor de inferencia ----------#
-
-
 class Var():
     """Clase para las variables.
     
@@ -485,8 +507,8 @@ class Var():
     def set_values(self, values:list):
         self.values = list(values)
         self.card = len(values)
-        
-    def get_var_data(self):
+
+    def print_var(self):
         return (self.name, self.card, self.values)
 
 class Distrib():
@@ -574,6 +596,12 @@ class DistribCond():
         
     def load_tabla(self, tabla: dict) -> None:
         self.tabla = carga_tabla_cond(self.var,self.entry,self.indep,tabla) 
+        
+    def _print(self):
+        print('Printing: ',self.name)
+        for k in self.tabla.keys():
+            print('{0}:{1} '.format(k,self.tabla[k]),end=' ')
+        print('\n')
     
     def get_P(self, conditions='all', values='all') -> list:
         L = []
@@ -658,7 +686,7 @@ class DistribCond():
     
         return df    
 
-class JoinDistrb():
+class JointDistrib():
     """ Distribución Conjunta; Tabla de probabilidad de una descomposición
     condicional siguiendo la regla del producto.
     
@@ -707,7 +735,7 @@ class Question():
     # - UNKNOWN: variables cuyos valores son deconocidos.
     # - SEARCHED: variables cuyos valores nos interesa conocer (query)
     #=================================================================================
-    def __init__(self, joint: JoinDistrb) -> None:
+    def __init__(self, joint: JointDistrib) -> None:
         self.joint = joint
         
     def compute_marginal(self, searched: list, unknown: list, r = 0) -> dict:
@@ -814,8 +842,8 @@ class Question():
                     #################################################
                     # Filtrar el KNOWN SPACE: X para calcular P(Y|X)
                     #################################################
-                    Kkeys=genera_llaves(Knd)
-                    Skeys=genera_llaves([Srd])
+                    Kkeys = genera_llaves(Knd)
+                    Skeys = genera_llaves([Srd])
                     
                     Knd_vars = look_up_table(Knd,Kkeys)
                     Srd_vars = look_up_table([Srd],Skeys)
@@ -830,6 +858,7 @@ class Question():
                     if K_U != []:
                         Knd_space = filter(Knd_space, K_U, thevars)
                     Knd_space = filter_rec(Knd_space,Knd_vars,v) 
+                    print(type(Knd_space))
                     Knd_space.sort()
                     
                     ##############################################################
@@ -1017,6 +1046,7 @@ class Question():
             known (list, optional): _description_. Defaults to [].
         """
         if len(searched) > 1:
+            # DISTRIBUCIÓN CONDICIONAL DE VARIAS VARIABLES BUSCADAS
             if known != []:
                 nS = [s.name for s in searched]
                 nK = [s.name for s in known]
@@ -1037,28 +1067,63 @@ class Question():
                 distribution.tabla=dico
                 return distribution
             
+            # DISTRIBUCIÓN MARGINAL DE VARIAS VARIABLES BUSCADAS
+            else:
+                names = [s.name for s in searched]
+                name = 'P('+','.join(names)+')'
+                
+                print('Computing marginal joint: {}'.format(name))
+                
+                All = [i.name for i in self.joint.vars]
+                Uk = list(set(All)-set(names))
+                unknown = []
+                
+                for n in Uk:
+                    unknown.append(self.joint.label_to_var[n])
+                    
+                distribution = Distrib(name, searched)
+                dico = self.compute_marginal(searched,unknown)
+                distribution.load_tabla(searched,dico)
+                
+                return distribution
             
-def carga_tabla_cond(var: Var, entrada: list, indep: list, tabla: dict) -> dict:
-    """Función para cargar valores de probabilidad condicional en un diccionario.
+        # DISTRIBUCIÓN MARGINAL DE UNA ÚNICA VARIABLE
+        else: 
+            searched = searched[0]
+            
+            if known is None or known == []:
+                name = 'P('+searched.name+')'
+                
+                print('computing marginal {}'.format(name))
+                
+                All = [i.name for i in self.joint.vars]
+                Uk = list(set(All)-set([searched.name]))
+                unknown = []
+                
+                for n in Uk:
+                    unknown.append(self.joint.label_to_var[n])
 
-    Args:
-        var (Var): Apuntador a la variable de salida (objeto tipo Var).
-        entrada (list): n-tuplas con combinaciones de los valores de entrada.
-        indep (list): Variables (tipo Var) independientes (entrada)
-        tabla (dict): Valores de probabilidad de la salida.
-    
-    Returns:
-        dict: Valores de probabilidad para var.
-    """
-    dico = {}
-    
-    salidas,keys = genera_llaves_cond(var,entrada,indep)
-    
-    for k,v in zip(keys,list(tabla.values())):
-        tab = {}
-        for i,s in enumerate(salidas):
-            tab[s] = v[i]
-        dico[k] = tab
-    
-    return dico
-    
+                dico = self.compute_marginal([searched],unknown)
+                distribution = Distrib(name, [searched])            
+                distribution.load_tabla([searched],dico)
+                
+                return distribution
+            
+            # DISTRIBUCIÓN CONDICIONAL DE UNA ÚNICA VARIABLE BUSCADA
+            else:
+                nK = [s.name for s in known]
+                name = 'P('+ searched.name +'|'+','.join(nK) +')'
+                
+                print('computing conditional: {}'.format(name))
+                
+                All = [a.name for a in self.joint.vars]
+                Uk = list(set(All)-set(searched.name).union(set(nK)))
+                unknown = []
+                for n in Uk:
+                    unknown.append(self.joint.label_to_var[n])
+
+                dico = self.compute_conditional([searched],known,unknown)                    
+                distribution = DistribCond(name, searched, known)            
+                distribution.tabla = dico
+                
+                return distribution

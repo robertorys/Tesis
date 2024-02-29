@@ -141,7 +141,7 @@ def carga_tabla_cond(var,entrada,indep,tabla):
     # ejemplo: ver función "genera_llaves"
     #===================================================================================
     dico={}
-    salidas,keys=genera_llaves_cond(var,entrada,indep)
+    salidas,keys =genera_llaves_cond(var,entrada,indep)
     #print(salidas,keys)
     if isinstance(tabla,list):
         for k,v in zip(keys,tabla):
