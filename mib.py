@@ -622,7 +622,7 @@ class DistribCond(Distrib):
     def load_tabla(self,tabla):
         self.tabla=carga_tabla_cond(self.var,self.entry,self.indep,tabla) 
         
-    def get_P(self,conditions='all',values='all'):
+    def get_P(self, conditions='all', values='all'):
         L=[]
         if not isinstance(conditions,str) and not isinstance(conditions,list):
             print("Las condiciones deben ser una lista de tuplas")

@@ -156,10 +156,10 @@ def look_up_table(variables: list, espacio: list) -> list:
 
     Args:
         variables (list): Lista de variables de búsqueda.
-        espacio (list): lista de n-tuplas con todas las combinaciones posibles del espacio de búsqueda.
+        espacio (list): Lista de n-tuplas con todas las combinaciones posibles del espacio de búsqueda.
 
     Returns:
-        list: lista de las variables con sus valores que tienen intersección con
+        list: Lista de tuplas que tiene el par, nombre de la variable y su valor, que tienen intersección con
         el espacio de búsqueda.
     """
     #==============================================================================
@@ -219,9 +219,13 @@ def filter(keys: list, v: list, thevars: list) -> list:
     el par variable-valor a su vez (llave de dico_X).
 
     Args:
-        keys (list): _description_
-        v (list): _description_
-        thecars (list): _description_
+        keys (list): Llaves del diccionario para filtar.
+        v (list): Lista de .
+        thevars (list): Lista del nombre de las variables.
+        
+    Returns:
+        list: 
+
     """
     m = []
     n = len(keys[0])
@@ -236,7 +240,7 @@ def filter(keys: list, v: list, thevars: list) -> list:
             
             if foundMatch:
                 if keys[0][i] not in thevars:
-                    in_v.append(i+i_v)
+                    in_v.append(i + i_v)
                     break
                 
     if foundMatch:
@@ -251,15 +255,18 @@ def filter(keys: list, v: list, thevars: list) -> list:
         
         if foundMatch:
             return m 
-    return m
+    return None
 
 def filter_rec(candidates: list, variables: list, v: tuple) -> list:
     """_summary_
 
     Args:
         candidates (list): Espacio de búsqueda.
-        variables (list): Las variables son términos de filtrado.
-        v (tuple): Llave de una variable.
+        variables (list): Términos de filtrado.
+        v (tuple): Llave de una variable, condición de filtro.
+        
+    Returns:
+        list: 
     """
     n = len(v)
     
@@ -279,10 +286,11 @@ def filter_rec(candidates: list, variables: list, v: tuple) -> list:
         for i in range(n):
             if v[i] == x[0]:
                 foundVar = True
-                i_v = 1
+                i_v = i
             
             if isinstance(v[i], int) and Idx == True:
-                i_n = iIdx = False 
+                i_n = i
+                Idx = False 
             
             if foundVar and i == i_v + i_n:
                 if v[i] == x[1]:
@@ -302,7 +310,7 @@ def filter_rec(candidates: list, variables: list, v: tuple) -> list:
                     
                     if foundVar:
                         if isinstance(k[i], int) and not foundIdx:
-                            i_n = i = i_v
+                            i_n = i + i_v
                             foundIdx = True
                         
                         if foundIdx and k[i_n] == x[1]:
@@ -315,7 +323,8 @@ def filter_rec(candidates: list, variables: list, v: tuple) -> list:
             candidates = filter_rec(terms, variables, v)
         else:
             candidates = filter_rec(candidates, variables, v)
-        
+        return candidates
+    else:
         return candidates
     
 def checkMatch(kand: tuple, sand: list, v: list, variables: list) -> tuple:
@@ -436,16 +445,13 @@ def compute_conditional_probs(dico_Y: dict, dico_X: dict, searched: list, known:
     # the values from the names of the variables, as values 
     # may be other thing than integers (e.g. real numbers or categorical).
     #######################################################################
-    
-    Sn = [i.name for i in searched]
-    Kn = [i.name for i in known]
-    
     entrada = [i.values for i in known]
     entrada = genera_espacio(entrada)
     
     salida, llaves = genera_llaves_cond(searched, entrada, known)
     
     dico = {}
+    keys_Y = list(dico_Y.keys())
     
     for k in llaves:
         Srd_vars = look_up_table(searched+known,dico_Y.keys())
@@ -525,6 +531,7 @@ class Distrib():
             self.var = variable
         if tabla is not None:
             self.tabla = carga_tabla(self.var, tabla)
+        self.indep = []
             
     def set_name(self, name:str):
         self.name = name
@@ -535,7 +542,7 @@ class Distrib():
     def load_tabla(self,var,tabla):
         self.tabla=carga_tabla(var,tabla)
     
-    def get_P(self, key) -> float:
+    def get_P(self, key = 'all') -> float:
         """Obtener una probabilidad.
 
         Args:
@@ -544,10 +551,10 @@ class Distrib():
         Returns:
             float : Valor de la probabilidad.
         """
-        if key in self.tabla.keys():
+        if key != 'all':
             return self.tabla[key]
         else:
-            print("Llave no valida")
+            return self.tabla
     
     def get_all_P(self) -> list:
         """ Obtener todas los prabilidades.
@@ -571,7 +578,7 @@ class Distrib():
             print('{0}:{1} '.format(k,self.tabla[k]),end=' ')
         print('\n')
 
-class DistribCond():
+class DistribCond(Distrib):
     """Distribución Condicional; Tabla de valores de probabilidad condicional.
 
     Atributos:
@@ -596,12 +603,6 @@ class DistribCond():
         
     def load_tabla(self, tabla: dict) -> None:
         self.tabla = carga_tabla_cond(self.var,self.entry,self.indep,tabla) 
-        
-    def _print(self):
-        print('Printing: ',self.name)
-        for k in self.tabla.keys():
-            print('{0}:{1} '.format(k,self.tabla[k]),end=' ')
-        print('\n')
     
     def get_P(self, conditions='all', values='all') -> list:
         L = []
@@ -682,7 +683,7 @@ class DistribCond():
         
         if formateo:
             for col in df.columns:
-                df[col]=df[col].map(lambda x:f'{format_numbers(x)}')
+                df[col] = df[col].map(lambda x:f'{format_numbers(x)}')
     
         return df    
 
@@ -713,15 +714,34 @@ class JointDistrib():
         self.descomp = descomp
     
     # ------ ** Dependencia con clase Question ** ------- #
-    def get_P(self):
-        Q = None
+    def get_P(self, n = 1000):
+        Q_= Question(self)
+        distrib = Q_.query(self.vars)
+        tabla = distrib.get_P()
+        if self.ID is self:
+            if len(tabla) > n:
+                opc = input(f'El tamaño de la tabla es mayor a {n}... ¿prefiere crear un archivo csv?[S]/n') or 'S'
+                if opc == 'S':
+                    df=self._toFrame()
+                    df.to_csv('outputTable.csv')
+                    print('se guardo el archivo outputTable.csv')
+                    return None
+        return tabla
     
     def _print(self):
         for distrib in self.descomp:
             print('{0} : {1}'.format(distrib.name, distrib.tabla))
     
-    def to_Frame(slef):
-        slef.ID = None
+    def to_Frame(self):
+        self.ID = None
+        dico = self.get_P()
+        self.ID = self
+        nombre = self.name
+        columnas = [nombre]
+        indice = list(dico.keys())
+        registros = list(dico.values())
+        df = pd.DataFrame(registros,columns=columnas,index=indice)
+        return df
             
 class Question():
     """Inferencia probabilista mediante una pregunta a la Conjunta.
@@ -828,7 +848,7 @@ class Question():
                     
                     for s in LS.keys():
                         y = LS[s]
-                        L_ps = defaultdict(list)
+                        L_ps[s] = defaultdict(list)
                         
                         for j in y:
                             p = P.tabla[j]
@@ -858,7 +878,7 @@ class Question():
                     if K_U != []:
                         Knd_space = filter(Knd_space, K_U, thevars)
                     Knd_space = filter_rec(Knd_space,Knd_vars,v) 
-                    print(type(Knd_space))
+            
                     Knd_space.sort()
                     
                     ##############################################################
@@ -1038,12 +1058,15 @@ class Question():
 
         return dico
 
-    def query(self, searched, known = []):
+    def query(self, searched, known = []) -> DistribCond:
         """_summary_
 
         Args:
             searched (_type_): _description_
             known (list, optional): _description_. Defaults to [].
+        
+        Returns:
+            DistribCond: 
         """
         if len(searched) > 1:
             # DISTRIBUCIÓN CONDICIONAL DE VARIAS VARIABLES BUSCADAS
@@ -1064,7 +1087,7 @@ class Question():
 
                 dico = self.compute_conditional(searched, known, unknown)                                            
                 distribution = DistribCond(name, searched, known)            
-                distribution.tabla=dico
+                distribution.tabla = dico
                 return distribution
             
             # DISTRIBUCIÓN MARGINAL DE VARIAS VARIABLES BUSCADAS
@@ -1127,3 +1150,37 @@ class Question():
                 distribution.tabla = dico
                 
                 return distribution
+            
+def ejemplo_prueba():
+    A = Var('A', [0,1])
+    B = Var('B', [0,1])
+    C = Var('C', [0,1,2])
+    D = Var('D', [0,1,2])
+    
+    dA = {0:0.3,1:0.7}
+    PA = Distrib(name='P(A)', variable=[A], tabla=dA)
+
+    dB_A = {0:{0:.2,1:.8},1:{0:.3,1:.7}}
+    PB_A = DistribCond(name='P(B|A)',var=B,indep=[A],tabla=dB_A)
+
+    tabla = {(0,0): (0.1,0.8,0.1),
+            (0,1): (0.3,0.5,0.2),
+            (1,0): (0.4,0.5,0.1),
+            (1,1): (0.1,0.7,0.2)}
+    
+    PC_AB = DistribCond('P(C|AB)',C,[A,B],tabla)
+    
+    # Construcción de la distribución conjunta con base en la descomposición 
+    PABC = JointDistrib(name='P(ABC)',variables=[A,B,C],descomp=[PA,PB_A,PC_AB])
+    
+    print(PB_A.get_P())
+    
+    # Construcción de la pregunta
+    Q_ABC = Question(joint=PABC)
+    
+    # Formulación de la consulta
+    PB = Q_ABC.query(searched=[B])
+    print(PB._print())
+    
+    
+ejemplo_prueba()
