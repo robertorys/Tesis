@@ -119,7 +119,6 @@ def carga_tabla(var: list, tabla: dict):
     keys = genera_llaves(var) 
     
     for k,v in zip(keys,list(tabla.values())):
-        print(k, v)
         dico[k] = v
     
     return dico
@@ -578,7 +577,7 @@ class Distrib():
             print('{0}:{1} '.format(k,self.tabla[k]),end=' ')
         print('\n')
 
-class DistribCond(Distrib):
+class CondDistrib(Distrib):
     """Distribución Condicional; Tabla de valores de probabilidad condicional.
 
     Atributos:
@@ -1028,7 +1027,7 @@ class Question():
         return dico
                 
     def compute_conditional(self, searched: list, known: list, unknown: list) -> dict:
-        """Método para calculas los marginales de searched.
+        """Método para calculas los marginales de searched, dsitribuciones condicionales.
 
         Args:
             searched (list): Variables cuyos valores nos interesa conocer (query).
@@ -1046,8 +1045,6 @@ class Question():
         ####################################################################  
         nS = [s.name for s in searched]
         nK = [s.name for s in known]
-        nU = [s.name for s in unknown]
-        name = 'P('+','.join(nS) +'|'+','.join(nK) +')'
         
         searchedJoint = searched + known
         unknownJoint = searched + unknown
@@ -1058,7 +1055,7 @@ class Question():
 
         return dico
 
-    def query(self, searched, known = []) -> DistribCond:
+    def query(self, searched, known = []) :
         """_summary_
 
         Args:
@@ -1066,7 +1063,7 @@ class Question():
             known (list, optional): _description_. Defaults to [].
         
         Returns:
-            DistribCond: 
+            Distribution: Distrib or DistribCond.
         """
         if len(searched) > 1:
             # DISTRIBUCIÓN CONDICIONAL DE VARIAS VARIABLES BUSCADAS
@@ -1086,7 +1083,7 @@ class Question():
                     unknown.append(self.joint.label_to_var[nombre])
 
                 dico = self.compute_conditional(searched, known, unknown)                                            
-                distribution = DistribCond(name, searched, known)            
+                distribution = CondDistrib(name, searched, known)            
                 distribution.tabla = dico
                 return distribution
             
@@ -1146,7 +1143,7 @@ class Question():
                     unknown.append(self.joint.label_to_var[n])
 
                 dico = self.compute_conditional([searched],known,unknown)                    
-                distribution = DistribCond(name, searched, known)            
+                distribution = CondDistrib(name, searched, known)            
                 distribution.tabla = dico
                 
                 return distribution
@@ -1161,19 +1158,18 @@ def ejemplo_prueba():
     PA = Distrib(name='P(A)', variable=[A], tabla=dA)
 
     dB_A = {0:{0:.2,1:.8},1:{0:.3,1:.7}}
-    PB_A = DistribCond(name='P(B|A)',var=B,indep=[A],tabla=dB_A)
+    PB_A = CondDistrib(name='P(B|A)',var=B,indep=[A],tabla=dB_A)
 
     tabla = {(0,0): (0.1,0.8,0.1),
             (0,1): (0.3,0.5,0.2),
             (1,0): (0.4,0.5,0.1),
             (1,1): (0.1,0.7,0.2)}
     
-    PC_AB = DistribCond('P(C|AB)',C,[A,B],tabla)
-    
+    PC_AB = CondDistrib('P(C|AB)',C,[A,B],tabla)
+    print
     # Construcción de la distribución conjunta con base en la descomposición 
     PABC = JointDistrib(name='P(ABC)',variables=[A,B,C],descomp=[PA,PB_A,PC_AB])
     
-    print(PB_A.get_P())
     
     # Construcción de la pregunta
     Q_ABC = Question(joint=PABC)
