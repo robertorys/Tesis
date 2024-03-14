@@ -6,17 +6,17 @@
 #==============================================================================
 from itertools import product
 
-class Event:
+class Var:
     """Clase para el manejo de eventos.
         Atributos:
-            values (list): Lista que contiene los valores que representan un suceso.
+            values (set): Lista que contiene los valores que representan un suceso.
             value: Vlaor que representa un suceso.
-            infer (list): Auxiliar para guardar temporalmente los valores del evento
+            infer (set): Auxiliar para guardar temporalmente los valores del evento
             durante la inferencia.
     """
-    def __init__(self, values: list) -> None:
+    def __init__(self, values: set) -> None:
         self.values = values
-        self.value = None
+        self.event = None
         self.infer = None
     
     def SetValue(self, value) -> None:
@@ -25,7 +25,7 @@ class Event:
         Args:
             value: Valor que representa un suceso. 
         """
-        self.value = value
+        self.event = value
     
     def SetInfer(self, value) -> None:
         """ Método para establecer un seceso para inferir.
@@ -49,7 +49,7 @@ class Distrib:
             event (Evente): Objeto que guarda el evento de la distribución.
             table (dict): Dicciónario que guarda las probabilidades (key: probability).
     """
-    def __init__(self, event: Event, table: dict) -> None:
+    def __init__(self, event: Var, table: dict) -> None:
         self.event = event
         self.table = table
         
@@ -59,7 +59,7 @@ class Distrib:
         Returns:
             float: Probabilidad del suceso establecido.
         """
-        return self.table[self.event.value]
+        return self.table[self.event.event]
         
 class CondDistrib:
     """ Clase para el manejo de distibuciones condicionales.
@@ -70,8 +70,8 @@ class CondDistrib:
                 La llave priemro es la tupla de los valores de los eventos independiante
                 y luego la llave para el evento dependiente, ej.: {(0,1):{0:.5,1:.5}}.
     """
-    def __init__(self, event: Event, indep: list, table: dict) -> None:
-        self.event = event
+    def __init__(self, var: Var, indep: set, table: dict) -> None:
+        self.event = var
         self.indep = indep
         self.table = table
 
@@ -83,18 +83,18 @@ class CondDistrib:
             float: Probabilidad de los sucesos establecido.
         """
         indep_key = [e.value for e in self.indep]
-        return self.table[tuple(indep_key)][self.event.value]
+        return self.table[tuple(indep_key)][self.var.event]
         
 class JointDistrib:
     """ Clase para manejar la probabilidad conjunta y también
         el manejo del modelado de un problema de inferencia.
         
         Atributos:
-            events (list): Lista de eventos de la conjunta.
-            descomp (list): Lista que guarda las distribuciones 
+            events (set): Lista de eventos de la conjunta.
+            descomp (set): Lista que guarda las distribuciones 
             que generan el modelo de un problema.
     """
-    def __init__(self, events: list, descomp: list) -> None:
+    def __init__(self, events: set, descomp: set) -> None:
         self.events = events
         self.descomp = descomp
         
@@ -119,52 +119,51 @@ class Mib:
     def __init__(self, model: JointDistrib) -> None:
         self.jointDistrib = model
     
-    def MarginalInferenceDistrib(self, event: Event) -> Distrib:
-        """ Método para hacer la consulta de inferencia de una distribución.
+    def MarginalInference_Distrib(self, var: Var) -> Distrib:
+        """ Método para hacer la consulta de inferencia de una distribución marginal.
 
         Args:
-            event (Event): Evento para inferir la distribución.
+            var (Var): Variable para inferir la probabiliodad de los eventos de la distribución.
 
         Returns:
             Distrib: Dsitribución marginal de la inferencia de event.
         """
-        margDict = {}
-        values = event.values.copy()
+        probDict = {}
+        events = var.values.copy()
         
-        for value in values:
+        for value in events:
             sum = 0
-            event.SetInfer(value)
+            var.SetInfer(value)
             
             for k in product(*self.jointDistrib.GetVars()):
                 i = 0
-                p = 1
-                
                 for e in self.jointDistrib.events:
                     e.SetValue(k[i])
                     i += 1
                 
+                p = 1
                 for d in self.jointDistrib.descomp:
                     p *= d._GetP()
 
                 sum += p
                 
-            margDict[value] = sum
+            probDict[value] = sum
         
-        event.Reset()
-        return Distrib(event, margDict)
+        var.Reset()
+        return Distrib(var, probDict)
     
-    def MarginalInferenceEvent(self, event: Event, value) -> float:
+    def MarginalInference_Event(self, var: Var, event: int) -> float:
         """ Método para hacer la consulta de inferencia de un evento.
 
         Args:
-            event (Event): Evento de la distribución.
-            value : Valor del suceso para inferir.
+            var (Var): Vriable con los eventos de la distribución.
+            value : Valor del evento para inferir.
             
         Returns:
             Distrib: Dsitribución marginal de la inferencia de event.
         """
         sum = 0
-        event.SetInfer(value)
+        var.SetInfer(event)
         
         for k in product(*self.jointDistrib.GetVars()):
             i = 0
@@ -180,11 +179,79 @@ class Mib:
             sum += p
         
         return sum
+
+    def CondInference_Distrib(self, hypothesis: Var, observations: set, obsValues: list) -> CondDistrib:
+        """_summary_
+
+        Args: 
+            hypothesis (Var): Varibale para los eventos de la hipotesis.
+            observations (set): Conjubto de varibales para las observaicones.
+            
+        Returns:
+            CondDistrib: Distribución de la probabilidad condicional consultada.
+        """
+        probDict = {}
+        events = hypothesis.values.copy()
+        
+        # Establecer los eventos a las obsevaciones.
+        for obs in observations:
+                obs.SetInfer(obsValues[i])
+                i += 1
+        
+        for value in events:
+            # Calcular denominador
+            
+            # Establecer los eventos a la hipótesis.
+            hypothesis.SetInfer(value)
+            i = 0
+            
+            den = 0
+            for k in product(*self.jointDistrib.GetVars()):
+                j = 0
+                for e in self.jointDistrib.events:
+                    e.SetValue(k[i])
+                    j += 1
+                
+                p = 1
+                for d in self.jointDistrib.descomp:
+                    p *= d._GetP()
+                den += p
+                
+            hypothesis.Reset()  
+            
+            # Calcular numerador
+            num = 0
+            for k in product(*self.jointDistrib.GetVars()):
+                j = 0
+                for e in self.jointDistrib.events:
+                    e.SetValue(k[i])
+                    j += 1
+                
+                p = 1
+                for d in self.jointDistrib.descomp:
+                    p *= d._GetP()
+                num += p
+                
+            probDict()
+            
+        # Establecer los eventos a las obsevaciones.
+        for obs in observations:
+                obs.Reset()
+                
+        return CondDistrib(hypothesis, )
+            
+    
+    def CondInference_Event(self, hypothesis: int, observations: set) -> CondDistrib:
+        """_summary_
+
+        Returns:
+            CondDistrib: _description_
+        """
         
 def ejemplo_prueba():
-    A = Event([0,1])
-    B = Event([0,1])
-    C = Event([0,1,2])
+    A = Var(set([0,1]))
+    B = Var(set([0,1]))
+    C = Var(set([0,1,2]))
     
     dA = {0:0.3,1:0.7}
     PA = Distrib(A,dA)
