@@ -11,41 +11,48 @@ class Var:
     
     Atributos:
         values (set): Conjunto, de enteros, que contiene los valores que representan un evento.
-        value: Vlaor que representa un evento.
+        value (int): Valor que representa un evento.
+        
     """
     
     def __init__(self, values: set) -> None:
         self.values = values
         self.event = None
-        
-        '''infer (set): Auxiliar para guardar temporalmente los valores de los eventos.
+        '''infer (int): Auxiliar para guardar temporalmente los valores de los eventos.
             durante la inferencia.'''
-        self.infer = None
+        self.infer = False
         
-    def SetValue(self, value: int) -> None:
+    def SetEvent(self, value: int) -> None:
         """ Método para establecer un evento.
-
         Args:
-            value (int): Valor que representa un suceso. 
+            value (int): Valor que representa un evento. 
         """
         self.event = value
     
-    def SetEvent(self, value: int) -> None:
-        """ Método para establecer un evento a inferir.
+    def SetInfer(self, event: int) -> None:
+        """_summary_
 
         Args:
-            value (int): Valor que representa un suceso. 
+            event (int): _description_
         """
-        
-        self.infer = self.values.copy()
-        self.values = set([value])
+        self.infer = True
+        self.event = event
+    
+    def GetInfer(self) -> list:
+        """ Método obtner los eventos para calcular.
+
+        Return:
+            list: lista con los eventos para hacer el calculo.
+        """  
+        if self.infer:
+            return [self.event]
+        else:
+            return list(self.values)
     
     def Reset(self) -> None:
-        """ Método para restablecer los atributos del objeto después de la inferencia.
+        """ Reestablecer el valor del atributo infer.
         """
-        if self.infer:
-            self.values = self.infer
-            self.infer = None
+        self.infer = False
         self.event = None
     
 class Distrib:
@@ -112,7 +119,7 @@ class JointDistrib:
         """
         vars = []
         for e in self.vars:
-            vars.append(list(e.values))
+            vars.append(e.GetInfer())
         return vars
 
 class Mib:
@@ -139,12 +146,12 @@ class Mib:
             float: Valor de probabilidad del evento.
         """
         sum = 0
-        var.SetEvent(event)
+        var.SetInfer(event)
         for k in product(*self.jointDistrib.GetVars()):
             # Establecer los valores de los eventos.
             i = 0
             for e in self.jointDistrib.vars:
-                e.SetValue(k[i])
+                e.SetEvent(k[i])
                 i += 1
             
             # Calcular la probabilidad con los valores de k.
@@ -154,7 +161,7 @@ class Mib:
             
             sum += p
             
-        
+        self._ResetAllVars()
         return sum
 
     def MarginalInference_Distrib(self, var: Var) -> Distrib:
@@ -174,103 +181,96 @@ class Mib:
         
         return Distrib(var, probDict)
     
-    def CondInference_Event(self, hypothesis: Var, event: int, observations: set, observationValues: list, iterable: bool = False) -> float:
-        """ Método para hacer la consulta de inferencia de un evento (hipótesis) dada las observaciones.
-            Inferir probabilidad condicional de un evento.
-        
+    def CondInference_Event(self, hypotesis: Var, event: int, observations: set, values: list) -> float:
+        """Método para hacer la consulta de inferencia de un evento condicional dada las observaciones.
+
         Args:
-            hypothesis (Var): Variable de la hipótesis.
+            hypotesis (Var): Variable de hipótesis.
             event (int): Valor de la hipótesis.
             observations (set): Conjunto de varibales observadas.
-            observationValues (list): Liste de enteros de los valores de las observaciones (mismo orden que las observaciones).
+            values (list): Valores de las observaciones, 
+                el orden debe de ser el mismo que el del argumento observations.
 
         Returns:
-            float: Valor de probabilidad del evento dada las observaciones.
+            float: Valor de probabilidad.
         """
-        
-        # Establecer los eventos de las observaciones.
-        i = 0
-        for o in observations:
-            o.SetEvent(observationValues[i])
-            i += 1
-        
         # Calcular el denominador
         den = 0
+        # Establecer las observaciones
+        i = 0
+        for o in observations:
+            o.SetInfer(values[i])
+            i += 1
         
+        # Calcular las combinaciones.
         for k in product(*self.jointDistrib.GetVars()):
-            
-            # Establecer los valores de los eventos.
-            j = 0
+            # Establecer los eventos.
+            i = 0
             for e in self.jointDistrib.vars:
-                e.SetValue(k[j])
-                j += 1
+                e.SetEvent(k[i])
+                i += 1
             
-            # Calcular la probailidad con los valores de k.
             p = 1
             for d in self.jointDistrib.descomp:
                 p *= d._GetP()
-            
             den += p
         
         # Calcular el numerador
         num = 0
-        # Establecer el evento de la hipótesis.
-        hypothesis.SetEvent(event)
-    
+        # Establecer la hipótesis
+        hypotesis.SetInfer(event)
+        
+        # Calcular las combinaciones.
         for k in product(*self.jointDistrib.GetVars()):
-            # Establecer los valores de los eventos.
-            j = 0
+            # Establecer los eventos.
+            i = 0
             for e in self.jointDistrib.vars:
-                e.SetValue(k[j])
-                j += 1
+                e.SetEvent(k[i])
+                i += 1
             
-            # Calcular la probailidad con los valores de k.
             p = 1
             for d in self.jointDistrib.descomp:
                 p *= d._GetP()
+            num += p
             
-            num += p  
-            
-        if iterable:
-            self._ResetAllVars()
-        
-        return num / den
-
-    def CondInference(self, hypothesis: Var, observations: set, observationValues: list) -> dict:
-        """ Método para hacer la consulta de inferencia de una distribución condicional dada observaciones.
-
-        Args:
-            hypothesis (Var): Variable para inferir la probabiliodad de los eventos de la distribución.
-            observations (set): Conjunto de variables observadas.
-            observationValues (list): Lista de los eventos dados de las variables.
-
-        Returns:
-            dict: Diccionario con las probabilidades de las diferentes hipótesis.
-        """
-        probDict = {}
-        events = hypothesis.values.copy()
-        for event in events:
-            probDict[event] = self.CondInference_Event(hypothesis, event, observations, observationValues, True)
         self._ResetAllVars()
-        return probDict
+        return num / den
     
-    def CondInference_Distrb(self, hypothesis: Var, observations: set) -> CondDistrib:
-        """ Método para hacer la consulta de inferencia de una distribución condicional.
+    def CondInference_Obs(self, hypotesis: Var, observations: set, values: int) -> dict:
+        """Método para hacer la consulta de inferencia de un evento condicional, 
+            con todos los valores posibles de la hipótesis.
 
         Args:
-            hypothesis (Var): Variable para inferir la probabiliodad de los eventos de la distribución.
-            observations (set): Conjunto de variables observadas.
-
-        Returns:
-            dict: Diccionario con las probabilidades de las diferentes hipótesis.
-        """
-        probDict = {}
-        oList = [o.values for o in observations]
-        
-        for oValues in product(*oList):
-            probDict[oValues] = self.CondInference(hypothesis, observations, oValues)
+            hypotesis (Var): Variable de hipótesis.
+            observations (set): Conjunto de varibales observadas.
+            values (list): Valores de las observaciones, 
+                el orden debe de ser el mismo que el del argumento observations.
             
-        return CondDistrib(hypothesis, observations, probDict)
+        Returns:
+            dict: Diccionario de la probabilidades de las hipótesis.
+        """
+        dH_O = {}
+        for e in hypotesis.values:
+            dH_O[e] = self.CondInference_Event(hypotesis, e, observations, values)
+        return dH_O
+
+    def CondInference_Dist(self, hypotesis: Var, observations: set) -> CondDistrib:
+        """Método para hacer la consulta de inferencia de los eventos, 
+            con todos los valores posibles de las observaciones.
+
+        Args:
+            hypotesis (Var): Variable de hipótesis.
+            observations (set): Conjunto de varibales observadas.
+            
+        Returns:
+            CondDistrib: Distribución condicional inferida.
+        """
+        dH_O = {}
+        obs = [e.values for e in observations]
+        for values in product(*obs):
+            dH_O[values] = self.CondInference_Obs(hypotesis, observations, values)
+        
+        return CondDistrib(hypotesis, observations, dH_O)
     
 def ejemplo_prueba():
     A = Var(set([0,1]))
@@ -303,8 +303,20 @@ def ejemplo_prueba():
     print(mib.MarginalInference_Event(B, 0))
     '''
     
-    PA_BC = mib.CondInference_Distrb(A, set([B,C]))
+    PA_BC = mib.CondInference_Event(A,0,set([B,C]),[0,2])
+    print(PA_BC)
+    PA_BC = mib.CondInference_Event(A,1,set([B,C]),[0,2])
+    print(PA_BC)
+    
+    PA_BC = mib.CondInference_Obs(A, set([B,C]), [0,2])
+    print(PA_BC)
+    
+    PA_BC = mib.CondInference_Dist(A, set([B,C]))
     print(PA_BC.table)
+    print()
+    for k1 in PA_BC.table.keys():
+        p = 0
+        for k2 in PA_BC.table[k1].keys():
+            p += PA_BC.table[k1][k2]
+        print(k1, p)
     
-    
-ejemplo_prueba()
