@@ -8,19 +8,19 @@
         "type": "tabs",
         "children": [
           {
-            "id": "7e92a15310890381",
+            "id": "d5a5fa8f8a3524b4",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Libros/Bayesian programming (Resumen).md",
+                "file": "Libros/Probability theory - The logic of science (Resumen).md",
                 "mode": "source",
                 "source": false
               }
             }
           },
           {
-            "id": "d5a5fa8f8a3524b4",
+            "id": "70492910726b63d2",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -159,11 +159,12 @@
       "command-palette:Abrir paleta de comandos": false
     }
   },
-  "active": "d5a5fa8f8a3524b4",
+  "active": "70492910726b63d2",
   "lastOpenFiles": [
-    "Libros/Bayesian programming (Resumen).md",
+    "Hilos en python.md",
     "Libros/Probability theory - The logic of science (Resumen).md",
     "Libros/Think Bayes (Resumen).md",
+    "Libros/Bayesian programming (Resumen).md",
     "Welcome.md",
     "Libros"
   ]
