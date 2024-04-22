@@ -164,7 +164,7 @@ class Mib:
         self._ResetAllVars()
         return sum
 
-    def MarginalInference_Distrib(self, var: Var) -> Distrib:
+    def Marginal_Distrib(self, var: Var) -> Distrib:
         """ Método para hacer la consulta de inferencia de una distribución marginal.
 
         Args:
@@ -180,6 +180,26 @@ class Mib:
             probDict[event] = self.MarginalInference_Event(var, event)
         
         return Distrib(var, probDict)
+    
+    def Marginal_inference(self, var: Var) -> tuple:
+        """ Método para inferir el valor del evento más probable de una distribución marginal.
+
+        Args:
+            var (Var): Variable para inferir la probabiliodad de los eventos de la distribución.
+
+        Returns:
+            tuple (int, float): Valor del evento y su probabilidad.
+        """
+        prob = 0
+        v = 0
+        for value in var.values:
+            vp = self.MarginalInference_Event(var, value)
+            
+            if prob < vp:
+                prob = vp
+                v = value
+                
+        return (v, prob)
     
     def CondInference_Event(self, hypotesis: Var, event: int, observations: set, values: list) -> float:
         """Método para hacer la consulta de inferencia de un evento condicional dada las observaciones.
@@ -236,7 +256,7 @@ class Mib:
         self._ResetAllVars()
         return num / den
     
-    def CondInference_Obs(self, hypotesis: Var, observations: set, values: int) -> dict:
+    def Cond_Obs(self, hypotesis: Var, observations: set, values: int) -> dict:
         """Método para hacer la consulta de inferencia de un evento condicional, 
             con todos los valores posibles de la hipótesis.
 
@@ -254,7 +274,7 @@ class Mib:
             dH_O[e] = self.CondInference_Event(hypotesis, e, observations, values)
         return dH_O
 
-    def CondInference_Dist(self, hypotesis: Var, observations: set) -> CondDistrib:
+    def Cond_Dist(self, hypotesis: Var, observations: set) -> CondDistrib:
         """Método para hacer la consulta de inferencia de los eventos, 
             con todos los valores posibles de las observaciones.
 
@@ -272,51 +292,27 @@ class Mib:
         
         return CondDistrib(hypotesis, observations, dH_O)
     
-def ejemplo_prueba():
-    A = Var(set([0,1]))
-    B = Var(set([0,1]))
-    C = Var(set([0,1,2]))
-    
-    dA = {0:0.3,1:0.7}
-    PA = Distrib(A,dA)
+    def Cond_inference(self, hypotesis: Var, observations: set, values: list) -> int:
+        """ Método para hacer la consulta de inferencia de la hipótesis.
 
-    dB_A = {(0,):{0:.2,1:.8},(1,):{0:.3,1:.7}}
-    PB_A = CondDistrib(B,[A],dB_A)
-    
-    dC_AB = {
-        (0,0): {0: 0.1, 1: 0.8, 2: 0.1},
-        (0,1): {0: 0.3, 1: 0.5, 2:0.2},
-        (1,0): {0: 0.4, 1: 0.5, 2: 0.1},
-        (1,1): {0: 0.2, 1: 0.7, 2: 0.2}
-    }
-    
-    PC_AB = CondDistrib(C,[A,B],dC_AB)
-    
-    PABC = JointDistrib([A,B,C], [PA, PB_A, PC_AB])
-    
-    mib = Mib(PABC)
-    
-    ''' 
-    PB = mib.MarginalInference_Distrib(B)
-    print(PB.table)
-    
-    print(mib.MarginalInference_Event(B, 0))
-    '''
-    
-    PA_BC = mib.CondInference_Event(A,0,set([B,C]),[0,2])
-    print(PA_BC)
-    PA_BC = mib.CondInference_Event(A,1,set([B,C]),[0,2])
-    print(PA_BC)
-    
-    PA_BC = mib.CondInference_Obs(A, set([B,C]), [0,2])
-    print(PA_BC)
-    
-    PA_BC = mib.CondInference_Dist(A, set([B,C]))
-    print(PA_BC.table)
-    print()
-    for k1 in PA_BC.table.keys():
-        p = 0
-        for k2 in PA_BC.table[k1].keys():
-            p += PA_BC.table[k1][k2]
-        print(k1, p)
-    
+        Args:
+            hypotesis (Var): Variable de hipótesis.
+            observations (set): Conjunto de varibales observadas.
+            values (list): Valores de las observaciones, 
+                el orden debe de ser el mismo que el del argumento observations.
+            
+        Returns:
+            dict: Diccionario de la probabilidades de las hipótesis.
+        """
+        
+        prob = 0
+        v = 0
+        for value in hypotesis.values:
+            vp = self.CondInference_Event(hypotesis, value, observations, values)
+            
+            if prob < vp:
+                prob = vp
+                v = value
+                
+        return v
+            
