@@ -93,14 +93,34 @@ class CondDistrib:
             y los eventos de las variables independientes.
 
         Returns:
-            float: Probabilidad de los sucesos establecido.
+            float: Probabilidad de los eventos establecido.
         """
         indep_key = [e.event for e in self.indep]
         return self.table[tuple(indep_key)][self.var.event]
 
 class JointDistrib:
-    """ Clase para manejar la probabilidad conjunta y 
-        el manejo del modelado de un problema para inferir alguna distribución de probabilidad.
+    """ Clase para el manejo de las distribuciones conjuntas.
+
+    Atributos:
+        var (set): Conjunto de objeto de los eventos de la distribución.
+        table (dict): Dicciónario de las probabilidades (key (tuple): probability).
+    """
+    
+    def __init__(self, vars: set, table: dict) -> None:
+        self.vars = vars
+        self.table = table
+    
+    def _GetP(self) -> float:
+        """ Método para obtener la probabilidad después de establecer el evento de las variables.
+
+        Returns:
+            float: Probabilidad de los eventos establecido.
+        """
+        key = [e.event for e in self.vars]
+        return self.table[tuple(key)]
+
+class Model:
+    """ Clase el manejo del modelado de un problema para inferir alguna distribución de probabilidad.
         
         Atributos:
             vars (set): Conjunto de variables de la distribución conjunta.
@@ -126,9 +146,9 @@ class Mib:
     """ Clase para el motor de inferencia bayesiana.
 
         Atributos:
-            jointDistrib (JointDistrib): Distribución conjunta con el modelo del problema.
+            jointDistrib (Model): Distribución conjunta con el modelo del problema.
     """
-    def __init__(self, model: JointDistrib) -> None:
+    def __init__(self, model: Model) -> None:
         self.jointDistrib = model
     
     def _ResetAllVars(self) -> None:
@@ -288,7 +308,7 @@ class Mib:
         dH_O = {}
         obs = [e.values for e in observations]
         for values in product(*obs):
-            dH_O[values] = self.CondInference_Obs(hypotesis, observations, values)
+            dH_O[values] = self.Cond_Obs(hypotesis, observations, values)
         
         return CondDistrib(hypotesis, observations, dH_O)
     
@@ -315,4 +335,77 @@ class Mib:
                 v = value
                 
         return v
+    
+    def JointInference_Evets(self, vars: set, values: list):
+        """ Método para hacer la consulta de inferencia de un evento.
+
+        Args:
+            vars (set): Variebles de los evento para inferir.
+            value (int): Valores de los evento para inferir.
             
+        Returns:
+            float: Valor de probabilidad de los evento.
+        """
+        
+        # Estables los eventos
+        i = 0
+        for var in vars:
+            var.SetInfer(values[i])
+            i += 1
+            
+        sum = 0
+        for k in product(*self.jointDistrib.GetVars()):
+            # Establecer los valores de los eventos.
+            i = 0
+            for e in self.jointDistrib.vars:
+                e.SetEvent(k[i])
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in self.jointDistrib.descomp:
+                p *= d._GetP()
+            
+            sum += p
+            
+        self._ResetAllVars()
+        return sum
+    
+    def Joint_Distrib(self, vars: set) -> Distrib:
+        """ Método para hacer la consulta de inferencia de una distribución conjunta.
+
+        Args:
+            var (Var): Variable para inferir la probabiliodad de los eventos de la distribución.
+
+        Returns:
+            Distrib: Dsitribución conjunta inferida.
+        """
+        probDict = {}
+        values = [var.values for var in vars]
+        
+        for events in product(*values):
+            probDict[events] = self.JointInference_Evets(vars, list(events))
+        
+        return Distrib(vars, probDict)
+
+    def Joint_inference(self, vars: set) -> tuple:
+        """ Método para inferir los valores de los eventos más probable de una distribución conjunta.
+
+        Args:
+            vars (set): Variables para inferir la probabiliodad de los eventos de la distribución.
+
+        Returns:
+            tuple (list, float): Valores de los eventos y su probabilidad.
+        """
+        
+        prob = 0
+        v = ()
+        values = [var.values for var in vars]
+        for value in product(*values):
+            vp = self.JointInference_Evets(vars, value)
+            
+            if prob < vp:
+                prob = vp
+                v = value
+                
+        return (v, prob) 
