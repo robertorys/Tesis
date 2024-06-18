@@ -1,0 +1,228 @@
+{
+  "main": {
+    "id": "248a0413d39be006",
+    "type": "split",
+    "children": [
+      {
+        "id": "5e35cac4eb42ded3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9b3be85ce4e973b5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "1f6562c537481869",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "NotasLibros/Bayesian programming.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "5f0ebe0da9dc579c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "NotasLibros/AIMA.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "c6c1b6fd5012a6d6",
+            "type": "leaf",
+            "state": {
+              "type": "pdf",
+              "state": {
+                "file": "Libros/AIMA-4th-edition.pdf"
+              }
+            }
+          },
+          {
+            "id": "744bf65b52423551",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "NotasLibros/AIMA.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5664c54f575f3aa1",
+    "type": "split",
+    "children": [
+      {
+        "id": "0dfa091c58027462",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "426a96331aaa565e",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "dbba5519515c1aac",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "tag:#Introducción",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "9106b9a680b487b5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "38cb1ec1c862ac47",
+    "type": "split",
+    "children": [
+      {
+        "id": "cb7602181a8ca04d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6a7a46d25da247e5",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "8e9619932b1ec944",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "2d385f489fcea684",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "2e0f9de0aa0bbc26",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "tesis/capitulo 1/Estructura de tesis.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false
+    }
+  },
+  "active": "9b3be85ce4e973b5",
+  "lastOpenFiles": [
+    "NotasLibros/Bayesian programming.md",
+    "tesis/capitulo 1/Estructura de tesis.md",
+    "Libros/MAXENT___Notas.pdf",
+    "NotasLibros/Probability theory - The logic of science.md",
+    "NotasLibros/AIMA.md",
+    "Libros/Bayesian-Programming.pdf",
+    "Libros/AIMA-4th-edition.pdf",
+    "Libros/Jaynes_book.pdf",
+    "tesis/capitulo 1/Introducción.md",
+    "tesis/capitulo 1/Planteamiento del problema.md",
+    "Libros/Jaynes_Probability_Theory.pdf",
+    "Libros/MAXENT___Notas.pdf.crdownload",
+    "Libros/thinkbayes.pdf",
+    "Imagenes/Figure13_2.png",
+    "Pasted image 20240517204044.png",
+    "Imagenes/Figure12_4.png",
+    "Imagenes/Figure13_6.png",
+    "Imagenes/Screenshot from 2024-06-09 19-42-27.png",
+    "Imagenes/Figure13.4.png",
+    "Imagenes/Screenshot from 2024-06-09 11-48-53.png",
+    "Libros",
+    "Libros/Bayesian programming (Resumen).md",
+    "Imagenes/Screenshot from 2024-05-17 20-40-28.png",
+    "Imagenes/Screenshot from 2024-06-08 20-41-22.png",
+    "Imagenes",
+    "tesis/capitulo 1",
+    "tesis/Sin título.md",
+    "Libros/Think Bayes (Bayesian Statistics Mode Simple).md",
+    "Hilos en python.md",
+    "Welcome.md"
+  ]
+}
