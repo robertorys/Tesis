@@ -1,5 +1,6 @@
-## Capitulo 1
+
 1. Introducción [[Bayesian programming#Introducción]][[AIMA]]
+2. Antecedentes
 	1. Redes de Bayes. [[AIMA#13.1 Representing Knowledge in a uncertain domain]] 
 	2. Reglas de Inferencia Bayesiana. [[AIMA#13.2 The Semantics of Bayesian Networks]]
 	3. Antecedentes sobre la inferencia Bayesiana. 

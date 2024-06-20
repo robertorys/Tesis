@@ -249,7 +249,7 @@ La probabilidades en realidad resumen un conjunto potencialmente infinito de cir
 
 ### 13.2 The Semantics of Bayesian Networks
 
-La *syntax* de una red de Bayes consiste de una grafo acíclico dirigido con alguna información de probabilidad local adjunta a cada nodo. La *semantics* define como la sintaxis corresponde a la distribución conjunta sobre las variables de la res.
+La *syntax* de una red de Bayes consiste de una grafo acíclico dirigido con alguna información de probabilidad local adjunta a cada nodo. La *semantics* define como la sintaxis corresponde a la distribución conjunta sobre las variables de la red.
 
 Asuma que la red de Bayes contiene $n$ variables, $X_1, \dots, X_n$. Una entrada genérica en la distribución conjunta es entonces $P(X_1 = x_1 \land \dots \land X_n = x_n)$, o $P(x_1, \dots, x_n)$ para abreviar. La semántica de la red de Bayes define cada entrada en la distribución conjunta como sigue:
 
@@ -340,3 +340,9 @@ Una red con ambas variables discretas y continuas es llamada una **red Bayesiana
 La tarea básica de cualquier sistema de inferencia probabilística es calcular la distribución de probabilidad posterior (posterior) para un conjunto de **variables de consulta (query variables)**, dado algún **evento** observado, generalmente, alguna asignación de valores a un conjunto de **variables de evidencia**.[^2] Para simplificar la presentación, consideremos solo una variable de consulta a la vez;  los algoritmos se pueden ampliar fácilmente a consultas con múltiples variables. (Por ejemplo, podemos resolver la consulta $P(U,V|e)$ multiplicando $P(V|e)$ y $P(U|V,e)$.) Utilizaremos notación del capítulo 12: $X$ denota la variable de consulta; $E$ denota el conjunto de variables de evidencia $E_1, \dots, E_m$, y $e$ es un evento particular observado; $Y$ denota las variables ocultos (no evidencia, no consulta) $Y_1, \dots, Y_l$. Por lo tanto, el conjunto completo de variables es ${X} \cup E \cup Y$. Una consulta típica solicita la distribución de probabilidad posterior $P(X|e)$.
 
 [^2] Otra tarea ampliamente estudiada es la de encontrar la **explicación más probable** para alguna evidencia observada. Esta y otras tareas se analizan en las notas al final del capítulo.
+
+#### 13.3.1 Inference by enumeration
+En el capitulo 12 se explico que cualquier probabilidad condicional puede ser calculada sumando términos de la distribución conjunta. Mas específicamente, una consulta P(X|e) pude ser respondida usando la ecuación ((1.8) [[AIMA#1.4. Inference using full joint distributions]]), el cual repetimos por conveniencia:
+
+$$ P(X|e) = \alpha P(X,e) = \alpha \sum_{y}{P(X,e,y)}$$
+Ahora, una red de Bayes tiene una representación completa de la distribución conjunta total. Específicamente, la ecuación (13.2)  muentra que los terminos $P(x,e,y)$ en la distribución conjunta puede ser escrita como el producto de probabilidades conjuntas de la red. Por lo tanto, *una 'query" puede ser contestada usando una red de Bayes calculando las sumas de los productos de la probabilidad condicionales de la red.*  
