@@ -2,7 +2,7 @@ En el libro "Bayesian Programming" , se menciona que cuando un modelo es traduci
 
 En ese mismo libro menciona que la lógica es la base matemática del razonamiento racional al igual que el principio fundamental de la computación, pero la lógica no se pude usar para modelar fenómenos ya que esta restringida a problemas que cuentan con información completa y cierta, y como se menciono anteriormente, los modelos cuentan con el problema de la incompletitud y la incertidumbre. Entonces es necesario de un tanto un *marco matemático alternativo* como un *marco computacional alternativo* para abordar la incompletitud y la incertidumbre. 
 
-Es necesario de un marco matemático que maneje tanto la información cierta como la incierta. La *teoría de la probabilidad* es este marco matemático alternativo. Es un modelo de razonamiento racional en presencia de incompletitud e incertidumbre.
+Es necesario de un marco matemático que maneje tanto la información cierta como la incierta. La *teoría de la probabilidad* es este marco matemático alternativo. Es un modelo de razonamiento racional en presencia de incompletitud e incertidumbre. El uso de la probabilidad como modelo de razonamiento se denomina 
 
 ---
 
