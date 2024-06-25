@@ -3,9 +3,9 @@
 2. Antecedentes
  subjective, 44 
  Bayesian, 372
-	1. Redes de Bayes. [[AIMA#13.1 Representing Knowledge in a uncertain domain]] 
-	2. Reglas de Inferencia Bayesiana. [[AIMA#13.2 The Semantics of Bayesian Networks]]
-	3. Antecedentes sobre la inferencia Bayesiana. 
+	1.  Antecedentes sobre la inferencia Bayesiana. 
+	2. Redes de Bayes. [[AIMA#13.1 Representing Knowledge in a uncertain domain]] 
+	3. Reglas de Inferencia Bayesiana. [[AIMA#13.2 The Semantics of Bayesian Networks]]
 	4. ¿Qué es un Motor de Inferencia Bayesiana (MIB)?
 	5. Programación Bayesiana.
 4. Planteamiento del problema

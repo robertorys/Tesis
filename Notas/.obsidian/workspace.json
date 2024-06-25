@@ -25,7 +25,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "tesis/capitulo 1/Planteamiento del problema.md",
+                "file": "NotasLibros/Bayesian programming.md",
                 "mode": "source",
                 "source": false
               }
@@ -64,19 +64,9 @@
                 "file": "Libros/Bayesian-Programming.pdf"
               }
             }
-          },
-          {
-            "id": "51cf2f477e325bbf",
-            "type": "leaf",
-            "state": {
-              "type": "pdf",
-              "state": {
-                "file": "Libros/Jaynes_Probability_Theory.pdf"
-              }
-            }
           }
         ],
-        "currentTab": 5
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -142,7 +132,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Libros/Jaynes_Probability_Theory.pdf",
+                "file": "NotasLibros/Bayesian programming.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -159,7 +149,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Libros/Jaynes_Probability_Theory.pdf",
+                "file": "NotasLibros/Bayesian programming.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -182,7 +172,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Libros/Jaynes_Probability_Theory.pdf"
+                "file": "NotasLibros/Bayesian programming.md"
               }
             }
           }
@@ -195,31 +185,32 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false
     }
   },
-  "active": "51cf2f477e325bbf",
+  "active": "9b3be85ce4e973b5",
   "lastOpenFiles": [
-    "Libros/Bayesian-Programming.pdf",
-    "tesis/capitulo 1/Estructura de tesis.md",
-    "Libros/Jaynes_Probability_Theory.pdf",
-    "tesis/capitulo 1/Introducción.md",
-    "NotasLibros/Bayesian programming.md",
-    "tesis/capitulo 1/Antecedentes.md",
-    "tesis/capitulo 1/Planteamiento del problema.md",
     "NotasLibros/AIMA.md",
+    "NotasLibros/Bayesian programming.md",
+    "Libros/Bayesian-Programming.pdf",
     "NotasLibros/Probability theory - The logic of science.md",
+    "tesis/capitulo 1/Introducción.md",
+    "tesis/capitulo 1/Estructura de tesis.md",
+    "tesis/capitulo 1/Antecedentes.md",
+    "t.md",
+    "Imagenes/Figure13_2.png",
+    "Libros/Jaynes_Probability_Theory.pdf",
+    "tesis/capitulo 1/Planteamiento del problema.md",
     "Libros/Jaynes_book.pdf",
     "Libros/AIMA-4th-edition.pdf",
     "Libros/MAXENT___Notas.pdf",
     "Libros/MAXENT___Notas.pdf.crdownload",
     "Libros/thinkbayes.pdf",
-    "Imagenes/Figure13_2.png",
     "Pasted image 20240517204044.png",
     "Imagenes/Figure12_4.png",
     "Imagenes/Figure13_6.png",

@@ -146,4 +146,16 @@ Para poder lidiar con la incertidumbre, asignamos probabilidades a las proposici
 
 Consideremos que, para asignar una probabilidad a una proposición $a$, es necesario tener al menos algún *conocimiento previo*, resumido en una proposición $\pi$. En consecuencia, la probabilidad de una proposición $a$ está siempre condicionada, al menos por $\pi$. Para cada diferente $\pi$, $P(\cdot | \pi)$ es una aplicación que asigna a cada proposición $a$ un valor real único $P(a|\pi)$ en el intervalo $[0,1]$.
 
+Por supuesto, nos interesa razonar sobre las probabilidades de conjunciones, disyunciones y negaciones de proposiciones, denotadas respectivamente, por $P(a \land b | \pi)$, $P(a \lor b \ \pi)$ y $P(\neg a | \pi)$.
+
+También nos interesa la probabilidad de la proposición a condicionada tanto por el conocimiento preliminar $\pi$ como por alguna otra proposición b. Esto denota $P(a | b \land \pi)$.
+
+### 12.4 Normalization and conjunctions postulates 
+
+El razonamiento probabilístico requiere soló dos reglas básicas:
+
+1. La regla de la conjunción, que de la probabilidad de una conjunción de proposiciones.
+$$ P(a \land b | \pi) = P(a | \pi) \times P(b | a \land pi) $$
+$$ = P(b | \pi) \times P(a \land \pi)$$
+
 

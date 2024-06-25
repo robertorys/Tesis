@@ -2,17 +2,11 @@ En el libro "Bayesian Programming" , se menciona que cuando un modelo es traduci
 
 En ese mismo libro menciona que la lógica es la base matemática del razonamiento racional al igual que el principio fundamental de la computación, pero la lógica no se pude usar para modelar fenómenos ya que esta restringida a problemas que cuentan con información completa y cierta, y como se menciono anteriormente, los modelos cuentan con el problema de la incompletitud y la incertidumbre. Entonces es necesario de un tanto un *marco matemático alternativo* como un *marco computacional alternativo* para abordar la incompletitud y la incertidumbre. 
 
-Es necesario de un marco matemático que maneje tanto la información cierta como la incierta. La *teoría de la probabilidad* es este marco matemático alternativo. Es un modelo de razonamiento racional en presencia de incompletitud e incertidumbre. El uso de la probabilidad como modelo de razonamiento se denomina 
+Es necesario de un marco matemático que maneje tanto la información cierta como la incierta. La *teoría de la probabilidad* es este marco matemático alternativo. Es un modelo de razonamiento racional en presencia de incompletitud e incertidumbre. El uso de la probabilidad como modelo de razonamiento se denomina enfoque subjetivista o Bayesiano. 
 
 ---
 
-La lógica es ala vez la base matemática del razonamiento racional y el principio fundamental de la computación actual. Sin embargo, la lógica, por esencia, está registrada a problemas en los que la información es *completa* y *cierta*. Se necesita tanto un *marco matemático alternativo* como un *marco computacional alternativo* para aborda la incompletitud y la incertidumbre.
 
-La *teoría de la probabilidad* es este marco matemático alternativo. Es un modelo de razonamiento racional en presencia de incompletitud e incertidumbre. Es una extensión de la lógica donde tanto la información cierta como la inercia tiene su lugar.
-
-James C. Maxwell expresó este punto sintéticamente: 
-
-"La ciencia actual de la lógica sólo se ocupa de cosas ciertas, imposibles o totalmente dudosas, sobre las cuales (afortunadamente) no tenemos que razonar. Por lo tanto. la verdadera lógica para este mundo es el calcula de probabilidades, que tiene en cuenta la magnitud de la probabilidad que existe, o debería existir, en la mente de un hombre razonable".
 
 La consideración de la probabilidad como modelo del razonamiento se denomina enfoque *subjetivista* o *Bayesiano*. Se opone al enfoque objetivista, que considera la probabilidad como modelo del mundo. Esta oposición no es sólo una controversia epistemológica; tiene muchas consecuencias fundamentales y prácticas.  
 
