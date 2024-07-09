@@ -13,6 +13,18 @@
             "state": {
               "type": "markdown",
               "state": {
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "b4b1c0bfe99d6cff",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
                 "file": "tesis/capitulo 1/Introducción.md",
                 "mode": "source",
                 "source": false
@@ -20,31 +32,7 @@
             }
           },
           {
-            "id": "9b3be85ce4e973b5",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "NotasLibros/Bayesian programming.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "c6c1b6fd5012a6d6",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "NotasLibros/Bayesian programming.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "552b2f2be8f8dfbd",
+            "id": "de92c7258c49c929",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -56,17 +44,19 @@
             }
           },
           {
-            "id": "7bc87fe8df74494b",
+            "id": "6df2983c9721daed",
             "type": "leaf",
             "state": {
-              "type": "pdf",
+              "type": "markdown",
               "state": {
-                "file": "Libros/Bayesian-Programming.pdf"
+                "file": "tesis/capitulo 1/Antecedentes.md",
+                "mode": "source",
+                "source": false
               }
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -132,7 +122,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "NotasLibros/Bayesian programming.md",
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -149,7 +139,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "NotasLibros/Bayesian programming.md",
+                "file": "tesis/capitulo 1/Estructura de tesis.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -172,7 +162,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "NotasLibros/Bayesian programming.md"
+                "file": "tesis/capitulo 1/Estructura de tesis.md"
               }
             }
           }
@@ -193,19 +183,21 @@
       "command-palette:Abrir paleta de comandos": false
     }
   },
-  "active": "9b3be85ce4e973b5",
+  "active": "de92c7258c49c929",
   "lastOpenFiles": [
-    "NotasLibros/AIMA.md",
-    "NotasLibros/Bayesian programming.md",
-    "Libros/Bayesian-Programming.pdf",
-    "NotasLibros/Probability theory - The logic of science.md",
-    "tesis/capitulo 1/Introducción.md",
-    "tesis/capitulo 1/Estructura de tesis.md",
     "tesis/capitulo 1/Antecedentes.md",
+    "NotasLibros/Bayesian programming.md",
+    "tesis/capitulo 1/Introducción.md",
+    "NotasLibros/AIMA.md",
+    "tesis/capitulo 1/Estructura de tesis.md",
+    "Libros/Bayesian-Programming.pdf",
+    "Imagenes/Figure13_1BP.png",
+    "tesis/capitulo 1/Planteamiento del problema.md",
     "t.md",
+    "NotasLibros/Probability theory - The logic of science.md",
+    "Imagenes/Figure12_1BP.png",
     "Imagenes/Figure13_2.png",
     "Libros/Jaynes_Probability_Theory.pdf",
-    "tesis/capitulo 1/Planteamiento del problema.md",
     "Libros/Jaynes_book.pdf",
     "Libros/AIMA-4th-edition.pdf",
     "Libros/MAXENT___Notas.pdf",
@@ -220,7 +212,6 @@
     "Libros",
     "Libros/Bayesian programming (Resumen).md",
     "Imagenes/Screenshot from 2024-05-17 20-40-28.png",
-    "Imagenes/Screenshot from 2024-06-08 20-41-22.png",
     "Imagenes",
     "tesis/capitulo 1",
     "tesis/Sin título.md",
