@@ -1,4 +1,4 @@
-Se[[Bayesian-Programming.pdf]]
+	[[Bayesian-Programming.pdf]]
 ## Introducción
 ### 1.1 Probability an alternative to logic
 
@@ -327,7 +327,7 @@ En la segunda categoría, por lo contrario, las opciones de modelos y las simpli
 #### 13.1.1 Graphical models and Bayesian networks
 
 ##### Bayesian network
-Las redes Bayesianas (BN, por sus siglas en inglés 'Bayesian networks'), introducidas por primera vez por Judea Parl (Pear, 1988), han surgido como un método primario parea trabajar indormación probabilística e incierta. Son el resultado de la unión entre la teoría de la probabilidad y teoría de grafos. 
+Las redes Bayesianas (BN, por sus siglas en inglés 'Bayesian networks'), introducidas por primera vez por Judea Parl (Pear, 1988), han surgido como un método primario parea trabajar información probabilística e incierta. Son el resultado de la unión entre la teoría de la probabilidad y teoría de grafos. 
 
 Las BN se definen mediante el siguiente programa bayesiano:
 

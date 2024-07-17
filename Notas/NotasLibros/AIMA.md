@@ -39,7 +39,7 @@ La regla del producto es tal vez fácil de recordad: esto viene del hecho que pa
 
 La proposiciones que describen conjuntos posibles de mundos generalmente se escriben en notación que combina elementos de proposición lógica y notación de satisfacción de restricciones. Esto es una **representación factorizada**, en el que cada mundo posible está representado por un conjunto de pares de variable/valor. 
 
-Las variables en teoría de la probabilidad con llamadas **variables aleatorias**, y su nombre empieza con una letra mayúscula. De este modo, en el ejemplo del dado, $Tota$ y $Die_1$ son variables aleatorias. Cada variable aleatoria es una función que asigna desde el dominio de los mundos posibles $\Omega$ a algún **rango**; el conjunto de valores posibles que puede tomar. El rango $Ttoal$ para dos datos es el conjunto $\{2,...,12\}$ y el rango de $Die_1$ es $\{1,...,6\}$. Los nombres de los valores siempre están en minúsculas, entonces podríamos escribir $\sum_{x}{P(X=x)}$ para sumar los valores de $X$. 
+Las variables en teoría de la probabilidad son llamadas **variables aleatorias**, y su nombre empieza con una letra mayúscula. De este modo, en el ejemplo del dado, $Tota$ y $Die_1$ son variables aleatorias. Cada variable aleatoria es una función que asigna desde el dominio de los mundos posibles $\Omega$ a algún **rango**; el conjunto de valores posibles que puede tomar. El rango $Ttoal$ para dos datos es el conjunto $\{2,...,12\}$ y el rango de $Die_1$ es $\{1,...,6\}$. Los nombres de los valores siempre están en minúsculas, entonces podríamos escribir $\sum_{x}{P(X=x)}$ para sumar los valores de $X$. 
 
 Podemos combinar proposiciones elementales utilizando los conectivos de la lógica proposicional. Por ejemplo, podemos expresar "La probabilidad de que el paciente sin dolor de muelas, es de 0.1", como sigue:
 
@@ -57,11 +57,11 @@ pero como una abreviación tenemos lo siguiente:
 
 $P(Weather) = \langle 0.6,0.1,0.29,0.01 \rangle$,
 
-donde **P** indica que el resultado es un vector de números y donde asumimos un orden predefinido $\langle sun,rain,cloud,snow \rangle$ en el rango de $Weather$. Decimos que la declaración de **P** define una **distribución de probabilidad** para una variable aleatoria $Weather$, que es una asignación de una probabilidad a cada uno de los posibles valores de la variable aleatoria. (In este caso, con un rengo discreto, la distribución es llamada una **distribución categórica**). La notación de **P** es también usado para distribuciones condicionales: **P**$(X|Y)$ dado los valores de $P(X = x_i | Y = y_j)$ para cada posible par $i,j$.  
+donde **P** indica que el resultado es un vector de números y donde asumimos un orden predefinido $\langle sun,rain,cloud,snow \rangle$ en el rango de $Weather$. Decimos que la declaración de **P** define una **distribución de probabilidad** para una variable aleatoria $Weather$, que es una asignación de una probabilidad a cada uno de los posibles valores de la variable aleatoria. (En este caso, con un rengo discreto, la distribución es llamada una **distribución categórica**). La notación de **P** es también usado para distribuciones condicionales: **P**$(X|Y)$ dado los valores de $P(X = x_i | Y = y_j)$ para cada posible par $i,j$.  
 
 Para variables continuas, no es posible escribir la distribución completa como un vector, porque hay infinitos valores. En cambio, podemos definir la probabilidad de que una variable aleatoria tome algún valor $x$ como una función parametrizada de $x$, generalmente llamada **función de densidad de probabilidad**.
 
-En adición a las distribuciones en una sola variable, necesitamos una notación para distribuciones en multiple variables. La comas son usadas para esto. Por ejemplo, $P(Weather,Cavity)$ denota la probabilidad de todas las combinaciones de los valores de $Weather$ y $Cavity$.  Esto es una tabla de $4 \times 2$  de probabilidades llamada la **distribución de probabilidad conjunto (joint probability distribution)** de $Wather$ y $Cavity$. Podemos también mezclar variables y valores específicos; $P(sol, Cavidad)$ sería un vector de dos elementos dadas las probabilidades de una carié con un día soleado y ninguna carié con un día soleado.
+En adición a las distribuciones en una sola variable, necesitamos una notación para distribuciones en multiple variables. La comas son usadas para esto. Por ejemplo, $P(Weather,Cavity)$ denota la probabilidad de todas las combinaciones de los valores de $Weather$ y $Cavity$.  Esto es una tabla de $4 \times 2$  de probabilidades llamada la **distribución de probabilidad conjunta (joint probability distribution)** de $Wather$ y $Cavity$. Podemos también mezclar variables y valores específicos; $P(sol, Cavidad)$ sería un vector de dos elementos dadas las probabilidades de una carié con un día soleado y ninguna carié con un día soleado.: 
 
 La notación de **P** hace que ciertas expresiones seam mucho más concisas de lo que podrían ser de otra manera.  Por ejemplo, la regla del producto para todos los posibles valores de $Weather$ y $Cavity$ pueden escribirse como una sola ecuación:
 
@@ -87,7 +87,7 @@ De la definición anterior de mundos posibles, se tiene que un modelo de probabi
 
 los axiomas básicos de la probabilidad (Ecuación 1.1 y 1.2) implica cierta relación entre los grados de creencias que puede concederse a proposiciones lógicamente relacionadas. Por ejemplo,  podemos derivar la relación familiar entre la probabilidad de una proposición y la probabilidad de su negación:
 
-$P(\neg a) = \sum_{\omega \in \neg a}{P(\omega)}$                                   por la ecuación (1.2)
+$P(\neg a) = \sum_{\omega \in \neg a}{P(\omega)}$  por la ecuación (1.2)
 $= \sum_{\omega \in \neg a}{P(\omega)} + \sum_{\omega \in a}{P(\omega)} - \sum_{\omega \in a}{P(\omega)}$
 $=\sum_{\omega \in \Omega}{P(\omega)} - \sum_{\omega}{p(\omega)}$                             Agrupando los dos primeros términos por (1.1) y (1.2)
 $= 1 - P(a)$                                                 
@@ -272,6 +272,27 @@ P(x_1, \dots, x_n) = \prod_{i=1}^{n}{P(x_1|parents(X_i))}.
 $$
 Esto significa que cuando uno estima valores para las distribuciones local, deben ser las probabilidades condicionales reales para la variable dados sus padres. Entonces, por ejemplo, cuando especificamos $\theta(JohnCalls=true|Alarm=true)=0.90$, debería sucedes que aproximadamente que suene la alarma, John llame. El hecho de que cada parámetro de la red tenga un significado preciso en términos de solo un pequeño conjunto de variables es crucialmente importante por la robustest y facilidad de especificación de los modelos.
 
+#### A method for constructing Bayesian networks
+La ecuación (13.2) define lo que significa una red bayesiana dada. El siguiente paso es explicar cómo construir una red bayesiana de tal manera que la distribución conjunta resultante sea una buena representación de un dominio dado. Ahora demostraremos que la ecuación (13.2) implica ciertas relaciones de independencia condicional que pueden usarse para guiar al ingeniero del conocimiento en la construcción de la topología de la red. Primero, reescribimos las entradas en la distribución conjunta en términos de probabilidad condicional, utilizando la regla del producto (ver página 390):
+
+$$P(X_1, \dots, X_n) = P(X_n|X_{n-1},\dots, X_1)P(X_{n-1},\dots,X_1)$$
+Luego repetimos el proceso, reduciendo cada probabilidad conjunta a una probabilidad condicional y una probabilidad conjunta en un conjunto más pequeño de variables. Terminamos con un gran producto:
+
+$$P(X_1,\dots,X_n) = P(X_n|X_{n-1},\dots,X_1)P(X_{n-1}|X_{n-2},\dots,X_1)\dotsb P(X_2|X_1)P(X_1)$$
+$$ = \prod_{i=1}^{n} P(X_i | X_{i-1},\dots,X_1) $$
+Esta identidad se denomina **regla de la cadena** y es válida para cualquier conjunto de variables aleatorias. Al compararla con la ecuación (13.2), vemos que la especificación de la distribución conjunta es equivalente a la afirmación general de que, para cada variable $X_i$ en la red,
+
+$$ P(X_i|X_{i-1},\dots,X_1) = P(X_i|Parents) (13.3)$$
+siempre que las $Parents(X_i) \subseteq {X_{i-1},\dots, X_1}$. Esta última condición se satisface numerando los nodos en orden topológico, es decir, en cualquier orden consistente con la estructura del gráfico dirigido.
+Lo que dice la ecuación (13.3) es que la red bayesiana es una representación correcta del dominio sólo si cada nodo es condicionalmente independiente de sus otros predecesores en el orden de nodos, dados sus padres. Podemos satisfacer esta condición con esta metodología:
+
+1. *Nodes*: Primero, determine el conjunto de variables que se requieren para modelar el dominio. Ahora ordena, $\{X_1,\dots, X_n\}$. Cualquier orden funcionará, pero la red resultante será más compacta si las variables se ordenan de manera que las causas precedan a los efectos.
+2. *Links*: Para $i =1$ a $n$ hacer:
+	- Elija un conjunto mínimo de padres para $X_i$ de $X_1 , \dots , X_{i-1}$ , tal que se satisfaga la ecuación (13.3).
+	- Para cada padre, inserte un enlace del padre a $X_i$.
+	- Escribe la tabla de probabilidad condicional, $P(X_i|Parents(X_i))$.
+
+Intuitivamente, los padres del nodo $X_1$ deberían contener todos aquellos nodos en $X_1, \dots, X{i-1}$ que influyen directamente en $X_i$.
 #### Compactness and node ordering
 
 Además de ser una representación completa y no redundante del dominio, una red de Bayes a menudo puede ser mucho más compacto que la distribución conjunta completa. Esta propiedad es la que hace posible manejar dominios con muchas variables.  La compacidad de las redes de Bayes es un ejemplo de una propiedad general de un **sistema estructurada localmente (locally structured system** (also called **sparse))**. En un sistema estructurado localmente, cada subcomponente interactua directamente con solo un número limitado de otros componentes, independientes del número total de componentes. La estructura local suele asociarse con un crecimiento linean en ligar de exponencial de la complejidad.
@@ -293,7 +314,7 @@ De la semántica de las redes de Bayes tal como se define en la ecuación (13.2)
 
 Por ejemplo, en la figura 13.2, la variable *JohnCalls* es independiente de *Burglary, Earthquake,* and *MaryCalls* dado el  valor de *Alarm*. La definición es es ilustrada en la Figura 13.4(a).
 
-Resulta que la propiedad de no descendientes combinada con la interpretación de los parámetros de la red $\theta(X_i|Parents(X_i))$ como probabilidad condicional $P(X_i|Parents(X_i))$ basta para reconstruir la distribución conjunta completa dad en la ecuación (13.2). En otras palabras, se puede ver la semántica de las redes de Bayes de una manera diferente: en ligar de difinir la distribución conjunta completa como el producto de distribuciones condicionales, la res define un conjunto de propiedades de independencia condicional. La distribución conjunta completa se puede derivar de esas propiedades.
+Resulta que la propiedad de no descendientes combinada con la interpretación de los parámetros de la red $\theta(X_i|Parents(X_i))$ como probabilidad condicional $P(X_i|Parents(X_i))$ basta para reconstruir la distribución conjunta completa dada en la ecuación (13.2). En otras palabras, se puede ver la semántica de las redes de Bayes de una manera diferente: en ligar de difinir la distribución conjunta completa como el producto de distribuciones condicionales, la res define un conjunto de propiedades de independencia condicional. La distribución conjunta completa se puede derivar de esas propiedades.
 
 Otra importante propiedad de independencia importante está implicada en la propiedad de no descendientes: 
 

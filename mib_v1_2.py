@@ -145,7 +145,7 @@ def genera_vars_llaves(variables: list) -> tuple:
     
     for v in variables:
         var_list.append(genera_llaves([v]))    
-    var_list=list(chain.from_iterable(var_list)) #flat list of lists
+    var_list = list(chain.from_iterable(var_list)) #flat list of lists
     
     return llaves, var_list
 
