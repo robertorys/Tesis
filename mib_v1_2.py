@@ -1179,4 +1179,4 @@ def ejemplo_prueba():
     print(PB._print())
     
     
-ejemplo_prueba()
+# ejemplo_prueba()

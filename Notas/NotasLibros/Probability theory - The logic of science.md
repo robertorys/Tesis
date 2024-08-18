@@ -118,10 +118,114 @@ Pero a pesar de la aparente debilidad de este argumento, cuando se plantea de ma
 
 Estos ejemplos muestran que el cerebro, al realizar un razonamiento plausible, no sólo decide si algo se vuelve más o menos plausible, sino que evalúa el grado de plausibilidad de alguna manera. La probabilidad de que llueva a las 10 a.m. depende en gran medida de la oscuridad de esas nubes. Y el cerebro también hace uso de información antigua así como de datos nuevos específicos del problema; Al decidir qué hacer, intentamos recordar nuestra experiencia pasada con las nubes y la lluvia, y lo que predijo el meteorólogo anoche.
 
+Para demostrar que el policía también estaba haciendo uso de la experiencia pasada de los policías en general, sólo tenemos que cambiar esa experiencia. Supongamos que hechos como estos ocurrieran varias veces cada noche a todos los policías, y que en todos los casos el caballero resultara ser completamente inocente. Muy pronto, los policías aprenderían a ignorar esas cosas triviales.
+
+Así, en nuestro razonamiento dependemos en gran medida de información previa que nos ayude a evaluar el grado de verosimilitud de un nuevo problema. Este proceso de razonamiento se lleva a cabo de manera inconsciente, casi instantánea, y ocultamos lo complicado que es en realidad llamándolo sentido común.
+
+El matemático George Pólya (1945, 1954) escribió tres libros sobre razonamiento plausible, señalando una gran cantidad de ejemplos interesantes y demostrando que existen reglas definidas mediante las cuales podemos realizar razonamientos plausibles (aunque en su obra permanecen en forma cualitativa). Los silogismos débiles anteriores aparecen en su tercer volumen. Se recomienda encarecidamente al lector que consulte la exposición de Pólya, que fue la fuente original de muchas de las ideas que sustentan el presente trabajo. Mostramos a continuación cómo los principios de Pólya pueden hacerse cuantitativos, con las consiguientes aplicaciones útiles.
+
+Evidentemente, el razonamiento deductivo descrito anteriormente tiene la propiedad de que podemos recorrer largas cadenas de razonamiento del tipo (1–1) y (1–2) y las conclusiones tienen tanta certeza como las premisas. En los otros tipos de razonamiento (1-3)-(1-5), la fiabilidad de la conclusión cambia a medida que pasamos por varias etapas, pero en su forma cuantitativa veremos que en muchos casos nuestras conclusiones pueden acercarse a la certeza del razonamiento deductivo (como nos lleva a esperar el ejemplo del policía). Pólya demostró que incluso un matemático puro utiliza en realidad estas formas más débiles de razonamiento la mayor parte del tiempo. Por supuesto, cuando publica un nuevo teorema, se esforzará mucho en inventar un argumento que utilice sólo el primer tipo; pero el proceso de razonamiento que lo llevó al teorema en primer lugar casi siempre implica una de las formas más débiles (basándose, por ejemplo, en conjeturas sugeridas por analogías). La misma idea se expresa en una observación de S. Banach (citada por S. Ulam, 1957): “Los buenos matemáticos ven analogías entre teoremas; los grandes matemáticos ven analogías entre analogías”.
+
+Los modelos tienen usos prácticos de un tipo muy diferente. A mucha gente le gusta decir: “Nunca fabricarán una máquina que sustituya a la mente humana, pues ésta hace muchas cosas que ninguna máquina podría hacer jamás”. J. von Neumann dio una hermosa respuesta a esta pregunta en una charla sobre ordenadores que dio en Princeton en 1948, a la que el autor tuvo el privilegio de asistir. En respuesta a la pregunta canónica del público \[“Pero, por supuesto, una simple máquina no puede pensar realmente, ¿verdad?”], dijo: “Usted insiste en que hay algo que una máquina no puede hacer. Si me dice exactamente qué es lo que una máquina no puede hacer, entonces siempre puedo fabricar una máquina que haga precisamente eso”.
+
+En principio, las únicas operaciones que una máquina no puede realizar por nosotros son aquellas que no podemos describir en detalle o que no se pueden completar en un número finito de pasos. Por supuesto, algunos evocarán imágenes de la incompletitud de Gödel, la indecidibilidad, las máquinas de Turing que nunca se detienen, etc. Pero para responder a todas esas dudas sólo necesitamos señalar la existencia del cerebro humano, que lo hace. Tal como indicó von Neumann, las únicas limitaciones reales para fabricar “máquinas que piensen” son nuestras propias limitaciones al no saber exactamente en qué consiste “pensar”.
+
+Pero en nuestro estudio del sentido común llegaremos a algunas ideas muy explícitas sobre el mecanismo del pensamiento. Cada vez que podemos construir un modelo matemático que reproduce una parte del sentido común prescribiendo un conjunto definido de operaciones, esto nos muestra cómo “construir una máquina” (es decir, escribir un programa de computadora) que opera con información incompleta y, al aplicar versiones cuantitativas de los silogismos débiles antes mencionados, realiza un razonamiento plausible en lugar de un razonamiento deductivo.
+
+De hecho, el desarrollo de este tipo de software informático para determinados problemas especializados de inferencia es una de las tendencias actuales más activas y útiles en este campo. Un tipo de problema abordado de esta manera podría ser el siguiente: dada una masa de datos, que comprende 10.000 observaciones separadas, determinar, a la luz de estos datos y de cualquier información previa disponible, las plausibilidades relativas de 100 hipótesis posibles diferentes sobre las causas en juego.
+
+Nuestro sentido común, por sí solo, podría ser suficiente para decidir entre dos hipótesis cuyas consecuencias son muy diferentes; pero para tratar con 100 hipótesis que no son muy diferentes, no podríamos hacer nada sin un ordenador y una teoría matemática bien desarrollada que nos muestre cómo programarlo. Es decir, ¿qué determina, en el silogismo del policía (1-5), si la plausibilidad de A aumenta en una cantidad grande, elevándola casi hasta la certeza, o sólo en una cantidad insignificante, haciendo que los datos B sean casi irrelevantes? El objeto del presente trabajo es desarrollar la teoría matemática que responda a tales preguntas, con la mayor profundidad y generalidad posible en la actualidad.
+
+Si bien esperamos que una teoría matemática sea útil para programar computadoras, la idea de una computadora pensante también es psicológicamente útil para desarrollar la teoría matemática. La cuestión del proceso de razonamiento que utilizan los cerebros humanos reales está cargada de emoción y de malentendidos grotescos. Es casi imposible decir algo al respecto sin involucrarse en debates sobre cuestiones que no sólo son indecidibles en nuestro estado actual de conocimiento, sino que son irrelevantes para nuestro propósito aquí.
+
+Obviamente, el funcionamiento del cerebro humano real es tan complicado que no podemos pretender explicar sus misterios; y en cualquier caso, no estamos tratando de explicar, y mucho menos de reproducir, todas las aberraciones e inconsistencias del cerebro humano. Se trata de un tema interesante e importante, pero no es el que estamos estudiando aquí. Nuestro tema son los principios normativos de la lógica, y no los principios de la psicología o la neurofisiología.
+
+Para enfatizar esto, en lugar de preguntarnos “¿Cómo podemos construir un modelo matemático del sentido común humano?”, preguntémonos “¿Cómo podríamos construir una máquina que pudiera llevar a cabo un razonamiento plausible y útil, siguiendo principios claramente definidos que expresen un sentido común idealizado?”.
+
+#### Introducing the Robot
+Para dirigir la atención hacia cosas constructivas y alejarla de irrelevancias controvertidas, inventaremos un ser imaginario. Su cerebro será diseñado por nosotros, de modo que razone de acuerdo con ciertas reglas definidas. Estas reglas se deducirán de desiderata simples que, nos parece, serían deseables en cerebros humanos; es decir, pensamos que una persona racional, debería.
+
+En principio, somos libres de adoptar las reglas que queramos; esa es nuestra manera de definir qué robot estudiaremos. Si comparamos su razonamiento con el suyo, si no encuentra ninguna semejanza, a su vez somos libres de rechazar nuestro robot y diseñar uno diferente, más a su gusto. Pero si encuentra una semejanza muy fuerte y decide que quiere y confía en este robot para que le ayude en sus propios problemas de inferencia, entonces eso será un logro de la teoría, no una premisa.
+
+Nuestro robot va a razonar sobre proposiciones. Como ya se ha indicado anteriormente, denotaremos las distintas proposiciones con letras mayúsculas en cursiva {A, B, C, etc.} y, por el momento, debemos exigir que cualquier proposición utilizada tenga, para el robot, un significado inequívoco y sea del tipo lógico simple y definido que debe ser verdadera o falsa. Es decir, hasta que se indique lo contrario, nos ocuparemos únicamente de la lógica de dos valores, o lógica aristotélica. No exigimos que la verdad o falsedad de una “proposición aristotélica” de ese tipo sea determinable mediante una investigación factible; de ​​hecho, nuestra incapacidad para hacerlo suele ser la razón por la que necesitamos la ayuda del robot. Por ejemplo, el autor personalmente considera que las dos proposiciones siguientes son verdaderas:
+
+$$ 
+A \equiv \quad\text{"Bethoven and Berlioz never met."} 
+$$
+$$
+B \equiv \quad\text{"Beethoven’s music has a better sustained quality than that ofBerlioz, although Berlioz at his best is the equal of anybody."}
+$$
+Pero la proposición B no es una proposición admisible para que nuestro robot piense en ella en este momento, mientras que la proposición A sí lo es, aunque es poco probable que su verdad o falsedad pueda establecerse definitivamente hoy. Una vez que nuestra teoría esté desarrollada, será interesante ver si la restricción actual a proposiciones aristotélicas como la A puede relajarse, de modo que el robot pueda ayudarnos también con proposiciones más vagas como la B.
+
+#### The Basic Desiderata
+Nuestro robot debe asignar a cada proposición sobre la que razona un cierto grado de plausibilidad, basándose en las pruebas que le hemos proporcionado; y siempre que recibe nuevas pruebas debe revisar estas asignaciones para tenerlas en cuenta. Para que estas asignaciones de plausibilidad puedan almacenarse y modificarse en los circuitos de su cerebro, deben estar asociadas a alguna cantidad física definida, como un voltaje o una duración de pulso o un número codificado en binario, etc., de cualquier forma que nuestros ingenieros quieran diseñar los detalles. Para los propósitos actuales, esto significa que tendrá que haber algún tipo de asociación entre los grados de plausibilidad y los números reales:
+
+1. *Degrees of Plausibility are represented by real numbers.*
+
+El Desideratum (I) se nos impone prácticamente por el requisito de que el cerebro del robot debe funcionar mediante la ejecución de algún proceso físico definido. Sin embargo, parecerá (Apéndice A) que también se requiere teóricamente; no vemos la posibilidad de ninguna teoría consistente sin una propiedad que sea funcionalmente equivalente al Desideratum (I).
+
+Adoptamos una convención natural pero no esencial: a un número mayor corresponderá una mayor verosimilitud. Será conveniente suponer también una propiedad de continuidad, que es difícil de enunciar con precisión en esta etapa; pero para decirlo intuitivamente: una verosimilitud infinitesimalmente mayor debe corresponder sólo a un número infinitesimalmente mayor.
+
+La plausibilidad que el robot asigna a alguna proposición A dependerá, en general, de si le dijimos que alguna otra proposición B es verdadera. Siguiendo la notación de Keynes (1921) y Cox (1961), lo indicamos con el símbolo
+
+$$ A|B $$
+que podemos llamar “la plausibilidad condicional de que A sea verdadero, dado que B es verdadero” o simplemente, “A dado B”. Representa algún número real. Así, por ejemplo,
+
+$$ A|BC$$
+(que podemos leer: “Un BC dado”) representa la plausibilidad de que A sea verdadero, dado que tanto B como C son verdaderos. O bien,\
+$$ A+B|CD $$
+
+representa la plausibilidad de que al menos una de las proposiciones A y B sea verdadera, dado que tanto C como D son verdaderas; y así sucesivamente. Hemos decidido representar una mayor plausibilidad con un mayor
+número, por lo que
+
+$$ (A|B) \gt (C|B) $$
+
+dice que, dado B, A es más plausible que C. En esta notación, si bien el símbolo de plausibilidad tiene la forma A|B sin paréntesis, a menudo añadimos paréntesis para mayor claridad de expresión. Por tanto, (1–32) dice lo mismo que
+
+$$  A|B \gt C|B $$
+pero su significado es más claro a la vista.
+
+Con el fin de evitar problemas imposibles, no vamos a pedirle a nuestro robot que se someta a la agonía de razonar a partir de premisas imposibles o mutuamente contradictorias; no podría haber una respuesta “correcta”. Por lo tanto, no intentamos definir A|BC cuando B y C son mutuamente contradictorias. Siempre que aparece un símbolo de este tipo, se entiende que B y C son proposiciones compatibles.
+
+Además, no queremos que este robot piense de una manera que sea directamente opuesta a la manera en que pensamos tú y yo. Por lo tanto, lo diseñaremos para que razone de una manera que sea al menos cualitativamente similar a la forma en que los humanos intentan razonar, como se describe en los silogismos débiles anteriores y en varios otros similares.
+
+Así, si tiene información antigua $C$ que se actualiza a $C'$ de tal manera que aumenta la plausibilidad de $A$: 
+$$ (A|C') \gt (A|C) $$
+pero la plausibilidad de B dado A no cambia:
+$$ (B|AC') = (B|AC) $$
+Por supuesto, esto sólo puede producir un aumento, nunca una disminución, en la plausibilidad de que tanto $A$ como $B$ sean verdaderas:
+$$ (AB|C') \geq (AB|C) $$
+y debe producir una disminución en la plausibilidad de que A sea falso:
+
+$$ (A\neg | C') \lt (A\neg | C) $$
+Este requisito cualitativo simplemente da el “sentido de dirección” en el que debe ir el razonamiento del robot; no dice nada acerca de cuánto cambian las plausibilidades, excepto que nuestro supuesto de continuidad (que también es una condición para la correspondencia cualitativa con el sentido común) ahora requiere que si A|C cambia solo infinitesimalmente, puede inducir solo un cambio infinitesimal en AB|C y A|C.
+
+En el próximo capítulo se explicarán las formas específicas en que utilizamos estos requisitos cualitativos, en el punto en que se ve por qué los necesitamos. Por ahora los resumiremos de manera sencilla:
+
+2. *Qualitative Correspondence with common sense.*
+
+Por último, queremos darle a nuestro robot otra propiedad deseable por la que la gente honesta se esfuerza sin conseguirla siempre: que siempre razone de manera coherente. Con esto nos referimos simplemente a los tres significados coloquiales comunes de la palabra “coherente”:
+
+3. coherente:
+	1. Si una conclusión puede razonarse de más de una manera, entonces todas las formas posibles deben conducir al mismo resultado.
+	2. El robot siempre tiene en cuenta todas las pruebas que tiene en relación con una cuestión. No ignora arbitrariamente parte de la información, basando sus conclusiones únicamente en lo que queda. En otras palabras, el robot es completamente aideológico.
+	3. El robot siempre representa estados de conocimiento equivalentes mediante asignaciones de plausibilidad equivalentes. Es decir, si en dos problemas el estado de conocimiento del robot es el mismo (excepto quizás por el etiquetado de las proposiciones), entonces debe asignar las mismas plausibilidades en ambos.
+
+Los desiderata (I), (II), (IIIa) son los requisitos “estructurales” básicos del funcionamiento interno del cerebro de nuestro robot, mientras que (IIIb), (IIIc) son condiciones de “interfaz” que muestran cómo el comportamiento del robot debe relacionarse con el mundo exterior. 
 ## 'Subjective’ vs. ‘objective’
 Estas palabras se utilizaron tanto en la teoría de la probabilidad que tratamos de aclarar nuestro uso de ellas. En la teoría que estamos desarrollando, cualquier asignación de probabilidad es necesariamente 'subjetivista' en el sentido de que describe sólo un estado de conocimiento, y no algo que pueda medirse en un experimento físico. Inevitablemente, alguien preguntará: '¿De quién es el estado de conocimiento?' La respuesta siempre es: "la del robot, o la de cualquier otra persona a quien se le dé la misma información y las mismas razones de acuerdo con los desiderata (conjunto de las cosas que se echan de menos y se desean) utilizados en nuestras deducciones en este capitulo". 
 
 Cualquiera que tenga la misma información, pero que llegue a una conclusión diferente a la de nuestro robot, necesariamente está violando uno de esos desiderata. En cista de tales violaciones, nos parece que una persona racional, si descubriera que está violando una de ellas, desearía revisar su pensamiento (en cualquier caso, seguramente tendría dificultades para persuadir a cualquier otra persona, que fuera consciente de esa violación, a que aceptara sus conclusiones). Ahora bien, era simplemente función de nuestros desiderata de interfaz (IIIb), (IIIc) hacer que estas asignaciones de probabilidad fueran completamente 'objetivas' en el sentido e son independientes de la personalidad del usuario. Son un medio para describir (o, lo que es lo mismo, para codificar) la información dada en el enunciado de un problema, independientemente de cualquier sentimiento personal (esperanza, temores, juicios de valor, etc.) que usted o yo podemos tener sobre las proposiciones implicadas. Es la 'objetividad 'en este sentido lo que se necesita para una teoría de la inferencia cintíficamente respetable.
+
+## Chapter 2 THE QUANTITATIVE RULES
+Hemos formulado ahora nuestro problema, y ​​es una cuestión de matemáticas sencillas calcular las consecuencias de nuestros desiderata: expresados ​​en términos generales,
+1. Representación de grados de plausibilidad mediante números reales.
+2. Correspondencia cualitativa con el sentido común.
+3. Consistencia.
+El presente capítulo está dedicado por completo a la deducción de las reglas cuantitativas para la inferencia que se desprenden de estos desiderata. Las reglas resultantes tienen una historia larga, complicada y asombrosa, llena de lecciones para la metodología científica en general (véanse los comentarios al final de varios capítulos).
+
+### La regla del producto 
+En primer lugar, buscamos una regla consistente que relacione la plausibilidad del producto lógico AB con las plausibilidades de A y B por separado. En particular, hallemos AB|C. Como el razonamiento es algo sutil, lo examinamos desde varios puntos de vista diferentes.
 
 ## 12. Ignorance priors and transformation groups
 ### 12.1 What are we trying to do?

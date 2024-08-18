@@ -8,11 +8,9 @@ from itertools import product
 
 class Var:
     """Clase para el manejo de las variables de probabilidad (establecer y manejar los eventos).
-    
     Atributos:
         values (set): Conjunto, de enteros, que contiene los valores que representan un evento.
-        value (int): Valor que representa un evento.
-        
+        value (int): Valor que representa un evento.   
     """
     
     def __init__(self, values: set) -> None:
@@ -30,10 +28,9 @@ class Var:
         self.event = value
     
     def SetInfer(self, event: int) -> None:
-        """_summary_
-
+        """ Método para establecer un evento para hacer inferencia,
         Args:
-            event (int): _description_
+            event (int): Valor del evento
         """
         self.infer = True
         self.event = event
@@ -63,7 +60,7 @@ class Distrib:
         table (dict): Dicciónario de las probabilidades (key (int): probability).
     """
     def __init__(self, var: Var, table: dict) -> None:
-        self.event = var
+        self.var = var
         self.table = table
         
     def _GetP(self) -> float:
@@ -72,7 +69,7 @@ class Distrib:
         Returns:
             float: Probabilidad del evento establecido.
         """
-        return self.table[self.event.event]
+        return self.table[self.var.event]
 
 class CondDistrib:
     """ Clase para el manejo de distibuciones condicionales.
@@ -312,7 +309,7 @@ class Mib:
         
         return CondDistrib(hypotesis, observations, dH_O)
     
-    def Cond_inference(self, hypotesis: Var, observations: set, values: list) -> int:
+    def Cond_inference(self, hypotesis: Var, observations: set, values: list):
         """ Método para hacer la consulta de inferencia de la hipótesis.
 
         Args:
@@ -326,7 +323,6 @@ class Mib:
         """
         
         prob = 0
-        v = 0
         for value in hypotesis.values:
             vp = self.CondInference_Event(hypotesis, value, observations, values)
             
@@ -334,9 +330,9 @@ class Mib:
                 prob = vp
                 v = value
                 
-        return v
+        return (v, prob)
     
-    def JointInference_Evets(self, vars: set, values: list):
+    def JointInference_Evets(self, vars: set, values: list) -> float:
         """ Método para hacer la consulta de inferencia de un evento.
 
         Args:

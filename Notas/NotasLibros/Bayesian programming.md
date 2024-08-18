@@ -1,4 +1,4 @@
-	[[Bayesian-Programming.pdf]]
+[[Bayesian-Programming.pdf]]
 ## Introducción
 ### 1.1 Probability an alternative to logic
 
@@ -98,7 +98,7 @@ $$ P(X|Y) = \frac{P(X)P(Y|X)}{P(Y)}, (2.8) $$
 Sin embargo, preferimos la primera forma, el cual establece que es un medio para calcular la probabilidad de una conjunción de variables de acuerdo tonto con las probabilidades de estas variables como con sus probabilidades.
 
 ### 2.7 Sillogisms
-Es muy importante para adquirir una sensación intuitiva clara de lo que significa una probabilidad condicional y la regla de conjunción. Un primer paso hacia esta comprensión puede ser los silogismos lógicos clásicos en us formas probabilísticas.
+Es muy importante para adquirir una sensación intuitiva clara de lo que significa una probabilidad condicional y la regla de conjunción. Un primer paso hacia esta comprensión puede ser los silogismos lógicos clásicos sen us formas probabilísticas.
 
 Recordemos primero los dos silogismos lógicos 
 
@@ -138,7 +138,7 @@ Sin embargo, utilizando probabilidades podemos ir más allá que con la lógica:
 El propósito de este capitulo es presentar la programación bayesiana formalmente y demostrar que es muy simple y muy clara pero, sin embargo, muy poderosa y muy sutil. La probabilidad es una extensión de la lógica, tan matemáticamente sensata y simple como la lógica, pero con más poder expresivo que la lógica.
 
 ### 12.2 Logical propositions
-El primer concepto que usamos es la noción usual de una *proposición lógica*. Las proposiciones son denotadas por nombres es minusculas. Se pueden componer proposiciones para obtener nuevas proposiciones utilizando operadores lógicos habituales: $a \land b$, denotando la conjunción de la proposición $a$ y $b$, $a \lor b$ es la disyunción, y $\neg a$, la negación de la proposición $a$.
+El primer concepto que usamos es la noción usual de una *proposición lógica*. Las proposiciones son denotadas por nombres es minúsculas. Se pueden componer proposiciones para obtener nuevas proposiciones utilizando operadores lógicos habituales: $a \land b$, denotando la conjunción de la proposición $a$ y $b$, $a \lor b$ es la disyunción, y $\neg a$, la negación de la proposición $a$.
 
 ### 12.3  Probability of a propositions
 
