@@ -8,42 +8,54 @@ from itertools import product
 import json
 
 class Var:
-    """
-    Clase para el manejo de las variables.
+    """Clase para el manejo de las variables (establecer y manejar los eventos).
+    Atributos:
+        values (set): Conjunto, de enteros, que contiene los valores que representan un evento.
+        value (int): Valor que representa un evento.   
+        
     Var(set) -> Nuevo objeto var
     """
     def __init__(self, values: set) -> None:
         self.values = values
-        self.Omega = None
+        self.know = False
         self.event = None
         
-    def setEvent(self, event) -> None:
+    def setMarginal(self, event) -> None:
+        """ Método para establecer un evento para el calculo de la marginal.
+        Args:
+            value (any): Valor que representa un evento. 
+        """
         self.event = event
-        self.Omega = self.values.copy().remove(event)
+        self.know = True
     
     def getValues(self) -> list:
-        if self.Omega:
-            return list(self.Omega)
-        else:
+        """ Método obtner los valores de la variable para calcular la marginal.
+
+        Return:
+            list: lista con los valores de la variable.
+        """  
+        if self.know:
             return [self.event]
+        else:
+            return list(self.values)
     
     def clear(self) -> None:
         self.event = None
-        self.Omega = None
+        self.know = False
        
 
 class Distrib:
-    """ 
-    Clase para el manejo de las distribuciones de probabilidad de una sola varible.
+    """ Clase para el manejo de distibuciones marginales.
+    Atributos:
+        vars (set): Conjunto de varibales para la distribución (tipo vars).
+        dirJson (str): Dirreción de un archivo JSON con el diccionario de probabilidad.
+        table (dict): Dicciónario de las probabilidades (tuple: float).
     
-    Distrib(Var) -> nuevo objeto Distrib sin especificación de sus probabilidades.
-    
-    Distrib(Var,str) -> nuevo objeto Distrib donde la tabla de probabilidades es un archivo JSON.
-    
-    Distrib(Var,dict) -> nuevo objeto Distrib donde la tabla de probabilidades es un diccionario.
+    Distrib(list,str) -> nuevo objeto Distrib donde la tabla de probabilidades es un archivo JSON.
+    Distrib(list,dict) -> nuevo objeto Distrib donde la tabla de probabilidades es un diccionario.
     """
-    def __init__(self, var: Var, dirJson: str = None, table: dict = None) -> None:
-        self.var = var
+    def __init__(self, vars: set, table: dict = None, dirJson: str = None) -> None:
+        self.vars = vars
         if dirJson:
             try:
                 with open(dirJson, 'r') as archivo:
@@ -60,19 +72,21 @@ class Distrib:
             self.table = None
             
     def P(self) -> float:
-        return self.table[self.var.event]
-          
+        key = [v.event for v in self.vars]
+        return self.table[tuple(key)]
+
 class CondDistrib:
+    """ Clase para el manejo de distibuciones condicionales.
+
+    Atributos:
+        vars (set): Conjunto de las variables (tipo var) dependiente (hipotesis).
+        indep (set): Conjunto de las variables (tipo var) independientes (observaciones).
+        dirJson (str): Dirreción de un archivo JSON con el diccionario de probabilidad.
+        table (dict): Dicciónario de las probabilidades ((tuple,tuple): float),
+        donde la primera tupla representa la llave para los valores de indep y la segunda para vars.
     """
-    Clase para el manejo de las distribuciones de probabilidad condicionales.
     
-    CondDistrib(Var) -> nuevo objeto CondDistrib sin especificación de sus probabilidades.
-    
-    CondDistrib(Var,str) -> nuevo objeto CondDistrib donde la tabla de probabilidades es un archivo JSON.
-    
-    CondDistrib(Var,dict) -> nuevo objeto CondDistrib donde la tabla de probabilidades es un diccionario.
-    """
-    def __init__(self, vars: set, indep: set, dirJson: str = None, table: dict = None) -> None:
+    def __init__(self, vars: set, indep: set, table: dict = None, dirJson: str = None) -> None:
         self.vars = vars
         self.indep = indep
         if dirJson:
@@ -89,55 +103,26 @@ class CondDistrib:
             self.table = table
         else:
             self.table = None
-            
+    
     def P(self) -> float:
-        indep_key = [v.event for v in self.indep]
-        events_key = [v.event for v in self.vars]
-        return self.p[tuple(indep_key)][tuple(events_key)]
-
-class JointDistrib:
-    """ 
-    Clase para el manejo de las distribuciones de probabilidad de una sola varible.
+        key = [v.event for v in self.vars]
+        indep_key = [e.event for e in self.indep]
+        return self.table[tuple(indep_key)][tuple(key)]
     
-    Distrib(Vars) -> nuevo objeto Distrib sin especificación de sus probabilidades.
+class Specification:
+    """ Clase el manejo de la especificación de un pragrama Bayesiano.
+        
+        Atributos:
+            vars (set): Conjunto de variables de la distribución conjunta.
+            descomp (set): Conjunto de las distribuciones que generan el modelo. 
     """
-    def __init__(self, vars: set) -> None:
-        self.vars = vars
-            
-    def setTable(self, table: dict) -> None:
-        self.table = table
     
-class Model:
-    """
-    Clase el manejo del modelo probabilístico de un problema basado en una especificación de una rede de Bayes.
-    
-    Model(set (Var),set (Distrib y CondDistrib)) -> nuevo objeto Model.
-    """
     def __init__(self, vars: set, descomp: set) -> None:
         self.vars = vars
         self.descomp = descomp
-    
-    def P(self, values: list) -> float:
-        if len(values) == len(self.vars):
-            i = 0
-            for var in self.vars:
-                var.event = values[i]
-                i += 1
-
-            p = 1
-            for d in self.descomp:
-                p *= d.P()
-            
-            return p
-        else:
-            print('Error')
-    
-    def clearVars(self):
-        for v in self.vars:
-            v.clear()
-    
-    def getValues(self) -> list:
-        """ Método para obtener todos los eventos de las variables de la conjunta.
+        
+    def GetVars(self) -> list:
+        """ Método para obtener una lista del conjunto de los valores de las variables.
 
         Returns:
             list: Lista de los valores de cada variable.
@@ -147,94 +132,39 @@ class Model:
             vars.append(e.getValues())
         return vars
 
-class Question:  
-    def __init__(self, distrib, iDistrib = False) -> None:
-        self.__dstrib = distrib
-        self.__iDistrib = iDistrib
-        self.data = None
-        self.__obs = None
-        self.__hyps = None
-    
-    def setValue(self, value):
-        if type(self.dstrib) is Distrib:
-            self.value = value
-    
-    def setObs(self, vules: list):
-        if type(self.__dstrib) is CondDistrib:
-            self.obs = vules
-    
-    def setHyps(self, vules: list):
-        if type(self.__dstrib) is CondDistrib:
-            self.hyps = vules
-            
 class Mib:
+    """ Clase para el motor de inferencia bayesiana.
+
+        Atributos:
+            model (Model): Modelo del problema con su distribución conjunta y su descomposción.
     """
-    Clase que cumple la función de un motor de inferencia
-    
-    Mib(Model) -> nuevo objeto Mib.
-    """
-    def __init__(self, model: Model) -> None:
+    def __init__(self, model: Specification) -> None:
         self.model = model
     
-    def query(self, question: Question):
-        if type(question.dstrib) is Distrib:
-            if not question.iDistrib:
-                mp = 0
-                for event in question.distrib.var.values:
-                    p = self.__marginal_event(question.distrib.var, event)
-                    if p > mp:
-                        mp = p
-                        se = event
-                question.data = (se, mp)
-            else:
-                self.__marginal_distrib(question.dstrib)
-        
-        elif type(question.dstrib) is CondDistrib:
-            if not question.iDistrib:
-                if question.obs:
-                    mp = 0
-                    sv = None
-                    
-                    obs = [v.values for v in question.dstrib.vars]
-                    for values in product(*obs):
-                        p = self.__cond_event(question.dstrib.vars, values, question.dstrib.indep, question.obs)
-                        if p > mp:
-                            mp = p
-                            sv = values
-                    
-                    question.data = (sv, mp)
-                
-                elif question.hyps:
-                    pass
-                
-                else:
-                    print("Error: falta establecer las obervaciones o hipotesis")
-            else:
-                pass
-            
-        
-        elif type(question.dstrib) is JointDistrib:
-            pass
+    def _ResetAllVars(self) -> None:
+        for v in self.model.vars:
+            v.clear()
     
-    #---------- Métodos para la inferencia --------------#
-    
-    def __marginal_event(self, var: Var, event: int) -> float:
-        """ Método para hacer la consulta de inferencia de un evento.
+    def marginalEvents(self, vars: set, events: list) -> float:
+        """ Método para hacer la consulta de una marginal.
 
         Args:
-            var (Var): Vriable con los eventos de la distribución.
-            value (int): Valor del evento para inferir.
+            vars (set): Conjunto de variables para la marginal.
+            events (list): Lista de los valores para las variables de la marginal.
             
         Returns:
-            float: Valor de probabilidad del evento.
+            float: Valor de la probabilidad de la marginal.
         """
         sum = 0
-        var.setEvent(event)
-        for k in product(*self.model.getValues()):
+        
+        for i,v in enumerate(vars):
+            v.setMarginal(events[i])
+        
+        for k in product(*self.model.GetVars()):
             # Establecer los valores de los eventos.
             i = 0
-            for e in self.model.vars:
-                e.event = k[i]
+            for v in self.model.vars:
+                v.event = k[i]
                 i += 1
             
             # Calcular la probabilidad con los valores de k.
@@ -243,75 +173,170 @@ class Mib:
                 p *= d.P()
             
             sum += p
-            
-        self.model.clearVars()
-        return sum
         
-    def __marginal_distrib(self, distrib: Distrib) -> None:
-        """ Método para hacer la consulta de inferencia de una distribución marginal.
+        self._ResetAllVars()
+        return sum
+    
+    def marginalDistrib(self, vars: set) -> Distrib:
+        """ Método para hacer la consulta de una distribución de la conjunta de vars.
 
         Args:
-            distrib (Distrib): Distribución para inferir las probabiliodades.
+            vars (set): Conjunto de variables para la distribución.
+
+        Returns:
+            Distrib: Dsitribución marginal calculada.
         """
         probDict = {}
+        pEvents = [v.values for v in vars]
         
-        for event in distrib.var.values:
-            probDict[event] = self.__marginal_event(distrib.var, event)
+        for events in product(*pEvents):
+            probDict[tuple(events)] = self.marginalEvents(vars, events)
         
-        distrib.table = probDict
+        return Distrib(vars, probDict)
     
-    def __cond_event(self, hypotesis: set, events: list, observations: set, values: list) -> float:
-        """Método para hacer la consulta de inferencia de un evento condicional dada las observaciones.
+    def DistribInference(self, vars: set) -> tuple:
+        """ Método para hacer la consulta del valor más probable de la conjunta de vars.
 
-            Args:
-                hypotesis (set): COnjunto de hipótesis.
-                events (list): Lista de los valores de las hipótesis.
-                observations (set): Conjunto de varibales observadas.
-                values (list): Valores de las observaciones, 
-                    el orden debe de ser el mismo que el del argumento observations.
+        Args:
+            vars (set): Conjunto de variables para la distribución.
+
+        Returns:
+            tuple (tuple, float): Valores de las variables y su probabilidad.
+        """
+        pv = 0
+        ev = 0
+        pEvents = [v.values for v in vars]
+        
+        for events in pEvents:
+            prob = self.marginalEvents(vars, events)
+            
+            if prob > pv:
+                pv = prob
+                ev = events
+                
+        return (tuple(ev), prob)
+    
+    def CondEvents(self, hypotesis: set, events: list, observations: set, values: list) -> float:
+        """ Método para hacer la consulta de una distribución condicional dada las hipótesis y observaciones.
+
+        Args:
+            hypotesis (set): Conjunto de variables para la hipótesi.
+            event (list): Lista de los vlores de la hipótesis.
+            observations (set): Conjunto de varibales para las observaciones.
+            values (list): Valores de las observaciones. 
+
+        Returns:
+            float: Valor de probabilidad.
         """
         
         # Calcular el denominador
-        den = 0
-        # Establecer las observaciones
-        i = 0
-        for o in observations:
-            o.event(values[i])
-            i += 1
+        den = self.marginalEvents(hypotesis | observations, events + values)
         
-        # Calcular las combinaciones.
-        for k in product(*self.model.getValues()):
-            # Establecer los eventos.
-            i = 0
-            for v in self.model.vars:
-                v.event(k[i])
-                i += 1
-            
-            p = 1
-            for d in self.model.descomp:
-                p *= d.P()
-            den += p
+        # Calcular el numerados
+        num = self.marginalEvents(observations, values)
         
-        # Calcular el numerador
-        num = 0
-        # Establecer la hipótesis
-        i = 0
-        for v in hypotesis:
-            v.setEvent(events[i])
-            i += 1
-        
-        # Calcular las combinaciones.
-        for k in product(*self.model.getValues()):
-            # Establecer los eventos.
-            i = 0
-            for v in self.model.vars:
-                v.SetEvent(k[i])
-                i += 1
-            
-            p = 1
-            for d in self.model.descomp:
-                p *= d._GetP()
-            num += p
-            
-        self.model.clearVars()
         return num / den
+    
+    def CondHyp(self, hypotesis: set, observations: set, values: list) -> dict:
+        """ Método para hacer la consulta de una distribución condicional dada las observaciones.
+        Args:
+            hypotesis (set): Conjunto de variable de la hipótesis.
+            observations (set): Conjunto de varibales de las observaciones.
+            values (list): Valores de las observaciones.
+            
+        Returns:
+            dict: Diccionario de la probabilidades de las hipótesis.
+        """
+        
+        dH_O = {}
+        HypValues = [h.values for h in hypotesis]
+        for hv in product(*HypValues):
+            dH_O[tuple(hv)] = self.CondEvents(hypotesis, hv, observations, values)
+        return dH_O
+    
+    
+    def CondDistrib_Inference(self, hypotesis: set, observations: set) -> CondDistrib:
+        """ Método para hacer la consulta de una distribución condicional.
+
+        Args:
+            hypotesis (Var): Conjunto de variables de las hipótesis.
+            observations (set): Conjunto de varibales de las observaciones.
+            
+        Returns:
+            CondDistrib: Distribución condicional.
+        """
+        dH_O = {}
+        ObsValues = [o.values for o in observations]
+        for ov in product(*ObsValues):
+            dH_O[tuple(ov)] = self.CondHyp(hypotesis, observations, ov)
+        return dH_O
+    
+    def CondInference_Hyp(self, hypotesis: set, observations: set, values: list) -> tuple:
+        """ Método para hacer la consulta de una distribución condicional dada las observaciones.
+        Args:
+            hypotesis (set): Conjunto de variable de la hipótesis.
+            observations (set): Conjunto de varibales de las observaciones.
+            values (list): Valores de las observaciones.
+            
+        Returns:
+            (hyp, p): Tupla con los valores de las variables de la hipótesis y su probabilidad.
+        """
+        
+        pv = 0
+        
+        HypValues = [h.values for h in hypotesis]
+        for hv in product(*HypValues):
+            proba = self.CondEvents(hypotesis, hv, observations, values)
+            
+            if proba > pv:
+                pv = proba
+                hyp = hv
+        return (hyp, pv)
+    
+    def CondInference_Obs(self, hypotesis: set, values: list, observations: set) -> tuple:
+        """ Método para hacer la consulta de una distribución condicional dada las observaciones.
+        Args:
+            hypotesis (set): Conjunto de variable de la hipótesis.
+            values (list): Valores de la hipótesis.
+            observations (set): Conjunto de varibales de las observaciones.
+              
+        Returns:
+            (hyp, p): Tupla con los valores de las variables de la hipótesis y su probabilidad.
+        """
+        
+        pv = 0
+        
+        obsValues = [o.values for o in observations]
+        for ov in product(*obsValues):
+            proba = self.CondEvents(hypotesis, values, observations, ov)
+            
+            if proba > pv:
+                pv = proba
+                ons = ov
+        return (ov, pv)
+
+class Question:
+    def __init__(self, sp: Specification) -> None:
+        self.mib = Mib(sp)
+    
+    def DistributionQuery(self, vars:set, indep:set = None):
+        if not indep:
+            return self.mib.marginalDistrib(vars)
+        else:
+            return self.mib.CondDistrib_Inference(vars, indep)
+        
+    def Query(self, vars:set, indep:set = None, values:list = None, hyp:list = None, obs:list = None):
+        if not indep:
+            if values:
+                return self.mib.marginalEvents(vars, values)
+            else:
+                return self.mib.DistribInference(vars)
+        else:
+            if obs and hyp:
+                return self.mib.CondEvents(vars, hyp, indep, obs)
+            elif obs and not hyp:
+                return self.mib.CondInference_Hyp(vars, indep, obs)
+            elif not obs and hyp:
+                return self.mib.CondInference_Obs(vars, indep, obs)
+            
+        print("Consulta no valida")
