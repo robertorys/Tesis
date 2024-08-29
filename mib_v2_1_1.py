@@ -136,7 +136,7 @@ class Mib:
         for v in self.model.vars:
             v.clear()
     
-    def marginal(self, vars: zip) -> float:
+    def marginal(self, vars: set, values: list) -> float:
         """ Método para hacer la consulta de una marginal.
 
         Args:
@@ -147,8 +147,8 @@ class Mib:
         """
         sum = 0
         
-        for v,e in vars:
-            v.setMarginal(e)
+        for i,v in enumerate(vars):
+             v.setMarginal(values[i])
             
         for k in product(*self.model.GetVars()):
             # Establecer los valores de los eventos.
@@ -167,7 +167,7 @@ class Mib:
         self._ResetAllVars()
         return sum
     
-    def cond(self, varsn:zip, varsd:zip) -> float:
+    def cond(self, vars:set, vars_values:list, indep:set, indep_values:list) -> float:
         """ Método para hacer la consulta de una distribución conjunta.
 
         Args:
@@ -178,10 +178,31 @@ class Mib:
             float: Valor de la probabilidad de la marginal.
         """
         # Calcular el denominador
-        den = self.marginal(varsn)
+        den = self.marginal(indep, indep_values)
         
         # Calcular el numerados
-        num = self.marginal(varsd)
+        num = 0
+        
+        for i,v in enumerate(vars):
+            v.setMarginal(vars_values[i])
+        for i,v in enumerate(indep):
+            v.setMarginal(indep_values[i])
+            
+        for k in product(*self.model.GetVars()):
+            # Establecer los valores de los eventos.
+            i = 0
+            for v in self.model.vars:
+                v.event = k[i]
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in self.model.descomp:
+                p *= d.P()
+            
+            num += p
+        
+        self._ResetAllVars()
         
         return num / den
     
@@ -199,7 +220,7 @@ class Mib:
         
         rows = []
         for events in product(*pEvents):
-            p = self.marginal(zip(vars, events))
+            p = self.marginal(vars, list(events))
             values = list(events)
             values.append(p)
             rows.append(values)
@@ -217,54 +238,119 @@ class Mib:
             CondDistrib: Dsitribución condicional calculada.
         """
         cols = [v.name for v in vars] + [v.name for v in indep] + ['probability']
-        vars_e = [v.values for v in vars]
-        indep_e = [v.values for v in indep]
+        vars_v = [v.values for v in vars]
+        indep_i = [v.values for v in indep]
         
         rows = []
-        for ve in product(*vars_e):
-            for vi in product(*indep_e):
-                lve = list(ve)
+        for vv in product(*vars_v):
+            for vi in product(*indep_i):
+                lvv = list(vv)
                 lvi = list(vi)
-                p = self.cond(zip(vars | indep,  lve + lvi), zip(indep, lvi))
-                values = lve + lvi
+                p = self.cond(vars, lvv, indep, lvi)
+                values = lvv + lvi
                 values.append(p)
                 rows.append(values)
         
         return CondDistrib(vars, indep, pd.DataFrame(rows, columns=cols))
-
-
-
-
-
-
-
-def ejemplo():
-    vA = set([0,1])
-    vB = set([0,1])
-    A = Var('A',vA)
-    B = Var('B',vB)
-    C = Var('C',vB)
     
-    
-    col = [A.name, B.name, 'probability']
-    tAB = [
-        [0,0, 1 / (len(vA) * len(vB))],
-        [0,1, 1 / (len(vA) * len(vB))],
-        [1,0, 1 / (len(vA) * len(vB))],
-        [1,1, 1 / (len(vA) * len(vB))]
-    ]
-    dAB = pd.DataFrame(tAB, columns=col)
-    PAB = Distrib(set([A,B]),dAB)
-    
-    
-    PA_C = CondDistrib(set([A]),set([C]),pd.DataFrame(tAB, columns=[A.name, C.name, 'probability']))
-    
-    PABC = Specification(set([A,B,C]), set([PAB, PA_C]))
-    mib = Mib(PABC)
-    
-    print(mib.marginalDistrib(set([A])).table)
-    print(mib.condDistrib(set([A]), set([B])).table)
+    def marginal_inference(self, vars:set) -> pd.DataFrame:
+        """ Método para consultar el mayor valor de la distribución de la conjunta de vars.
 
-ejemplo()
+        Args:
+            vars (set): Conjunto de variables para la distribución.
 
+        Returns:
+            DataFrame: DataFrame con el valor más probable.
+        """
+        cols = [v.name for v in vars]  + ['probability']
+        pValues = [v.values for v in vars]
+        
+        p = 0
+        values = None
+        for value in product(*pValues):
+            pv = self.marginal(vars, list(value))
             
+            if pv > p:
+                p = pv
+                values = list(value)
+        
+        values.append(p)
+        return pd.DataFrame([values], columns=cols)
+
+    def cond_inference_obs(self, vars:set, indep:set, obs:list) -> pd.DataFrame:
+        """  Método para consultar el mayor valor de distribución condicional dada las observaciones.
+
+        Args:
+            vars (set): Conjunto de variables para la distribución.
+            indep (set): Conjunto de variables independientes para la distribución.
+
+        Returns:
+            CondDistrib: Dsitribución condicional calculada.
+        """
+        cols = [v.name for v in vars] + [v.name for v in indep] + ['probability']
+        vars_v = [v.values for v in vars]
+        
+        p = 0
+        values = None
+        for vv in product(*vars_v):
+            lvv = list(vv)  
+            pv = self.cond(vars, lvv, indep, obs)
+            
+            if pv > p:
+                p = pv
+                values = lvv + obs
+                
+        values.append(p)
+        return pd.DataFrame([values], columns=cols)
+    
+    def cond_inference_hyp(self, vars:set, hyp:list, indep:set) -> pd.DataFrame:
+        """  Método para consultar el mayor valor de distribución condicional dada las hipótesis.
+
+        Args:
+            vars (set): Conjunto de variables para la distribución.
+            indep (set): Conjunto de variables independientes para la distribución.
+
+        Returns:
+            CondDistrib: Dsitribución condicional calculada.
+        """
+        cols = [v.name for v in vars] + [v.name for v in indep] + ['probability']
+        vars_v = [v.values for v in vars]
+        indep_i = [v.values for v in indep]
+        
+        p = 0
+        values = None
+        for vi in product(*indep_i):
+            lvi = list(vi)
+            pv = self.cond(vars, hyp, indep, lvi)
+            
+            if pv > p:
+                p = pv
+                values = hyp + lvi
+            
+        values.append(p)
+        
+        return pd.DataFrame([values], columns=cols)
+
+class Question:
+    def __init__(self, sp: Specification) -> None:
+        self.mib = Mib(sp)
+    
+    def DistributionQuery(self, vars:set, indep:set = None):
+        if not indep:
+            return self.mib.marginalDistrib(vars)
+        else:
+            return self.mib.condDistrib(vars, indep)
+        
+    def Query(self, vars:set, indep:set = None, values:list = None, obs:list = None):
+        if not indep:
+            if values:
+                return self.mib.marginal_inference(vars, values)
+        else:
+            if obs and not values:
+                return self.mib.cond_inference_obs(vars, indep, obs)
+            elif not obs and values:
+                return self.mib.cond_inference_hyp(vars, values, indep)
+            
+        print("Consulta no valida")
+
+        

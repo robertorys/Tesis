@@ -327,18 +327,18 @@ class Question:
         else:
             return self.mib.CondDistrib_Inference(vars, indep)
         
-    def Query(self, vars:set, indep:set = None, values:list = None, hyp:list = None, obs:list = None):
+    def Query(self, vars:set, indep:set = None, values:list = None, obs:list = None):
         if not indep:
             if values:
                 return self.mib.marginalEvents(vars, values)
             else:
                 return self.mib.DistribInference(vars)
         else:
-            if obs and hyp:
-                return self.mib.CondEvents(vars, hyp, indep, obs)
-            elif obs and not hyp:
+            if obs and values:
+                return self.mib.CondEvents(vars, values, indep, obs)
+            elif obs and not values:
                 return self.mib.CondInference_Hyp(vars, indep, obs)
-            elif not obs and hyp:
+            elif not obs and values:
                 return self.mib.CondInference_Obs(vars, indep, obs)
             
         print("Consulta no valida")
