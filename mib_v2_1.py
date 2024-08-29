@@ -106,6 +106,7 @@ class CondDistrib:
     
     def P(self) -> float:
         key = [v.event for v in self.vars]
+        print(self.indep)
         indep_key = [e.event for e in self.indep]
         return self.table[tuple(indep_key)][tuple(key)]
     
@@ -158,6 +159,7 @@ class Mib:
         sum = 0
         
         for i,v in enumerate(vars):
+            print(i,v, events[i])
             v.setMarginal(events[i])
         
         for k in product(*self.model.GetVars()):
@@ -190,7 +192,7 @@ class Mib:
         pEvents = [v.values for v in vars]
         
         for events in product(*pEvents):
-            probDict[tuple(events)] = self.marginalEvents(vars, events)
+            probDict[tuple(events)] = self.marginalEvents(vars, list(events))
         
         return Distrib(vars, probDict)
     
@@ -230,7 +232,7 @@ class Mib:
         """
         
         # Calcular el denominador
-        den = self.marginalEvents(hypotesis | observations, events + values)
+        den = self.marginalEvents(hypotesis.union(observations), events + values)
         
         # Calcular el numerados
         num = self.marginalEvents(observations, values)
@@ -251,7 +253,7 @@ class Mib:
         dH_O = {}
         HypValues = [h.values for h in hypotesis]
         for hv in product(*HypValues):
-            dH_O[tuple(hv)] = self.CondEvents(hypotesis, hv, observations, values)
+            dH_O[tuple(hv)] = self.CondEvents(hypotesis, list(hv), observations, values)
         return dH_O
     
     
@@ -268,7 +270,7 @@ class Mib:
         dH_O = {}
         ObsValues = [o.values for o in observations]
         for ov in product(*ObsValues):
-            dH_O[tuple(ov)] = self.CondHyp(hypotesis, observations, ov)
+            dH_O[tuple(ov)] = self.CondHyp(hypotesis, observations, list(ov))
         return dH_O
     
     def CondInference_Hyp(self, hypotesis: set, observations: set, values: list) -> tuple:
@@ -286,7 +288,7 @@ class Mib:
         
         HypValues = [h.values for h in hypotesis]
         for hv in product(*HypValues):
-            proba = self.CondEvents(hypotesis, hv, observations, values)
+            proba = self.CondEvents(hypotesis, list(hv), observations, values)
             
             if proba > pv:
                 pv = proba
@@ -308,7 +310,7 @@ class Mib:
         
         obsValues = [o.values for o in observations]
         for ov in product(*obsValues):
-            proba = self.CondEvents(hypotesis, values, observations, ov)
+            proba = self.CondEvents(hypotesis, values, observations, list(ov))
             
             if proba > pv:
                 pv = proba
