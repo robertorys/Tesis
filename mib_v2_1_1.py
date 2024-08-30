@@ -6,7 +6,8 @@
 #==============================================================================
 from itertools import product
 import pandas as pd
-    
+import time
+
 class Var:
     """Clase para el manejo de las variables (establecer y manejar los eventos).
     Atributos:
@@ -64,7 +65,14 @@ class Distrib:
     def __init__(self, vars: set, table: pd.DataFrame) -> None:
         self.vars = vars
         self.table = table
+        self.namesToVar = self._namesToVar()
+        
+    def _namesToVar(self) -> dict:
+        ntv = {}
+        for v in self.vars:
+            ntv[v.name] = v
     
+        
     def P(self) -> float:
         """Método para regresar el valor de probabilidad de los valores establecidos a los 
         eventos de las variables.
@@ -89,8 +97,8 @@ class CondDistrib(Distrib):
         eventos de las variables.
         """
         conds = []
-        t_vars = self.vars | self.indep
-        for v in t_vars:
+        n_vars = [v for v in self.vars] + [v for v in self.indep]
+        for v in n_vars:
             conds.append(self.table[v.name] == v.event)
             
         filt = conds[0]
@@ -137,6 +145,7 @@ class Mib:
             v.clear()
     
     def marginal(self, vars: set, values: list) -> float:
+        self.times = []
         """ Método para hacer la consulta de una marginal.
 
         Args:
@@ -147,8 +156,10 @@ class Mib:
         """
         sum = 0
         
-        for i,v in enumerate(vars):
-             v.setMarginal(values[i])
+        i = 0
+        for v in vars:
+            v.setMarginal(values[i])
+            i += 1 
             
         for k in product(*self.model.GetVars()):
             # Establecer los valores de los eventos.
@@ -160,8 +171,10 @@ class Mib:
             # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self.model.descomp:
+                inicio = time.time()
                 p *= d.P()
-            
+                fin = time.time()
+                self.times.append(fin - inicio)
             sum += p
         
         self._ResetAllVars()
@@ -195,7 +208,7 @@ class Mib:
                 v.event = k[i]
                 i += 1
             
-            # Calcular la probabilidad con los valores de k.
+            # Calcutimes[-1]lar la probabilidad con los valores de k.
             p = 1
             for d in self.model.descomp:
                 p *= d.P()
@@ -344,7 +357,9 @@ class Question:
     def Query(self, vars:set, indep:set = None, values:list = None, obs:list = None):
         if not indep:
             if values:
-                return self.mib.marginal_inference(vars, values)
+                return self.mib.marginal(vars, values)
+            else:
+                return self.mib.marginal_inference(vars)
         else:
             if obs and not values:
                 return self.mib.cond_inference_obs(vars, indep, obs)
