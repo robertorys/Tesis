@@ -193,7 +193,7 @@ class Mib:
         # Calcular el denominador
         den = self.marginal(indep, indep_values)
         
-        # Calcular el numerados
+        # Calcular el numerador
         num = 0
         
         for i,v in enumerate(vars):
@@ -208,7 +208,7 @@ class Mib:
                 v.event = k[i]
                 i += 1
             
-            # Calcutimes[-1]lar la probabilidad con los valores de k.
+            # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self.model.descomp:
                 p *= d.P()

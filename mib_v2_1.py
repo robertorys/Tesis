@@ -1,5 +1,5 @@
 #==============================================================================
-#title          : mib_v2.py
+#title          : mib_v2_1.py
 #description    : Motor de inferencia bayesiano para variables discretas.
 #version        : 2.1
 #python_version : 3.10.12
@@ -106,7 +106,6 @@ class CondDistrib:
     
     def P(self) -> float:
         key = [v.event for v in self.vars]
-        print(self.indep)
         indep_key = [e.event for e in self.indep]
         return self.table[tuple(indep_key)][tuple(key)]
     
