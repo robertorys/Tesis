@@ -152,9 +152,9 @@ class Mib:
     def __init__(self, model: Specification) -> None:
         self._model = model
         self._nameToVar = {}
+        
         for v in self._model.getVars():
             self._nameToVar[v.getName()] = v
-    
     def _ResetAllVars(self) -> None:
         for v in self._model.getVars():
             v.clear()
@@ -299,7 +299,7 @@ class Mib:
         return columns, value, p
     
     def condObs(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
-        """ Método para inferir el valor más probable de una obersvación de distribución condicional
+        """ Método para inferir el valor más probable de una obersvación de una distribución condicional
         dado los valores de las hipótesis
 
         Args:
@@ -328,23 +328,21 @@ class Mib:
         return columns_vars, vars_values, columns_indep, value_indep, p
     
     def condHyp(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
-        """ Método para inferir el valor más probable de una obersvación de distribución condicional
-        dado los valores de las hipótesis
+        """ Método para inferir el valor más probable de una hipótesis de una distribución condicional
+        dado los valores de las observaciones.
 
         Args:
             vars (tuple): Tupla de las variables de la distribución condicional.
-            vars_values (tuple): Tupla con los valores de las variables de la distribución.
             indep (tuple): Tupla de las variables independientes de la distribución condicional.
+            indep_values (tuple): Tupla con los valores de las variables de indep de la distribución.
         Returns:
             tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
             el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
         """
-        
-        columns_vars = tuple([v.getName() for v in vars])
-        columns_indep = tuple([v.getName() for v in indep])
+        columns_vars = tuple([v.getName() for v in list(vars)])
+        columns_indep = tuple([v.getName() for v in list(indep)])
         
         values_vars = [v.getValues() for v in vars]
-        
         p = 0
         value_vars = None
         for vv in product(*values_vars):
@@ -354,7 +352,7 @@ class Mib:
                 p = p_vi
                 value_vars = vv
                 
-        return (columns_vars, value_vars, columns_indep, indep_values, p)
+        return (columns_vars, value_vars, p)
 
 class Question:
     def __init__(self, sp: Specification) -> None:
