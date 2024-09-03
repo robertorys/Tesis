@@ -127,9 +127,19 @@ class Specification:
         self._descomp = descomp
         
     def getVars(self) -> set:
+        """ Método para obtener el conjunto de las variables
+
+        Returns:
+            set: Conjunto de las variables.
+        """
         return self._vars
     
     def getDescomp(self) -> set:
+        """ Método para obtener el conjunto de las distribuciones de la descomposición.
+
+        Returns:
+            set: Conjunto de las distribuciones
+        """
         return self._descomp
         
     def GetVars(self) -> list:
@@ -155,6 +165,7 @@ class Mib:
         
         for v in self._model.getVars():
             self._nameToVar[v.getName()] = v
+            
     def _ResetAllVars(self) -> None:
         for v in self._model.getVars():
             v.clear()
@@ -356,26 +367,28 @@ class Mib:
 
 class Question:
     def __init__(self, sp: Specification) -> None:
-        self._mib = Mib(sp)
+        self._sp = sp
     
     def DistributionQuery(self, vars:set, indep:set = None):
+        mib = Mib(self._sp)
         if not indep:
-            return self._mib.marginalDistrib(vars)
+            return mib.marginalDistrib(vars)
         else:
-            return self._mib.condDistrib(vars, indep)
+            return mib.condDistrib(vars, indep)
         
     def Query(self, vars:tuple, indep:tuple = None, values_var:tuple = None, values_indep:tuple = None):
+        mib = Mib(self._sp)
         if not indep:
             if values_var:
-                return self._mib.marginal(tuple([v.getName() for v in vars]), list(values_var))
+                return mib.marginal(tuple([v.getName() for v in vars]), list(values_var))
             else:
-                return self._mib.marginal_inference(set(vars))
+                return mib.marginal_inference(set(vars))
         else:
             if values_var and values_indep:
-                return self._mib.cond(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
+                return mib.cond(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
             elif values_var and not values_indep:
-                return self._mib.condObs(vars, values_var, indep)
+                return mib.condObs(vars, values_var, indep)
             elif not values_var and values_indep:
-                return self._mib.condHyp(vars, indep, values_indep)
+                return mib.condHyp(vars, indep, values_indep)
             
         print("Consulta no valida")
