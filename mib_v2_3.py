@@ -219,8 +219,7 @@ class Mib:
         # Calcular el numerados
         vars_u = tuple(list(vars_names) + list(indep_names))
         vals_u = list(vars_values) + list(indep_values)
-        num =  self.marginal(vars_u, vals_u)
-        
+        num = self.marginal(vars_u, vals_u)
         
         # Calcular el denominador
         den = self.marginal(indep_names, list(indep_values))
@@ -334,8 +333,8 @@ class Mib:
             tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
             el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
         """
-        columns_vars = tuple([v.getName() for v in list(vars)])
-        columns_indep = tuple([v.getName() for v in list(indep)])
+        columns_vars = tuple([v.getName() for v in vars])
+        columns_indep = tuple([v.getName() for v in indep])
         
         values_vars = [v.getValues() for v in vars]
         p = 0
