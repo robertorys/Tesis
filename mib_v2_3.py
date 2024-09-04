@@ -180,7 +180,9 @@ class Mib:
         Returns:
             float: Valor de la probabilidad de la marginal.
         """
+        
         sum = 0
+        
         for i,name in enumerate(names):
             self._nameToVar[name].setMarginal(events[i])
         
@@ -215,28 +217,10 @@ class Mib:
         """
         
         # Calcular el numerados
-        num = 0
+        vars_u = tuple(list(vars_names) + list(indep_names))
+        vals_u = list(vars_values) + list(indep_values)
+        num =  self.marginal(vars_u, vals_u)
         
-        for i,name in enumerate(vars_names):
-            self._nameToVar[name].setMarginal(vars_values[i])
-        for i,name in enumerate(indep_names):
-            self._nameToVar[name].setMarginal(indep_values[i])
-            
-        for k in product(*self._model.GetVars()):
-            # Establecer los valores de los eventos.
-            i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
-                i += 1
-            
-            # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
-            num += p
-        
-        self._ResetAllVars()
         
         # Calcular el denominador
         den = self.marginal(indep_names, list(indep_values))
