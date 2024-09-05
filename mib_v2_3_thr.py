@@ -6,6 +6,9 @@
 #==============================================================================
 from itertools import product
 import threading
+import copy
+import queue
+import math
 
 class Var:
     """Clase para el manejo de las variables (establecer y manejar los eventos).
@@ -30,14 +33,6 @@ class Var:
     
     def setEvent(self, event):
         self._event = event
-        
-    def setMarginal(self, event) -> None:
-        """ Método para establecer un evento para el calculo de la marginal.
-        Args:
-            value (any): Valor que representa un evento. 
-        """
-        self._event = event
-        self._know = True
     
     def getValues(self) -> list:
         """ Método obtner los valores de la variable para calcular la marginal.
@@ -49,6 +44,17 @@ class Var:
             return [self._event]
         else:
             return list(self._values)
+    
+    def getCard(self) -> int:
+        return len(self._values)
+    
+    def setMarginal(self, event) -> None:
+        """ Método para establecer un evento para el calculo de la marginal.
+        Args:
+            value (any): Valor que representa un evento. 
+        """
+        self._event = event
+        self._know = True
     
     def clear(self) -> None:
         self._event = None
@@ -80,6 +86,9 @@ class Distrib:
         """
         key = [nameToVar[name].getEvent() for name in self._columns]
         return self._table[tuple(key)]
+    
+    def P_(self, var_key):
+        return self._table[var_key]
 
 class CondDistrib:
     """ Clase para el manejo de distibuciones condicionales.
@@ -114,6 +123,9 @@ class CondDistrib:
         vars_key = [nameToVar[name].getEvent() for name in self._columns_vars]
         indep_key = [nameToVar[name].getEvent() for name in self._columns_indep]
         return self._table[tuple(indep_key)][tuple(vars_key)]
+    
+    def P_(self, var_key, indep_key):
+        return self._table[indep_key][var_key]
     
 class Specification:
     """ Clase el manejo de la especificación de un pragrama Bayesiano.
@@ -170,6 +182,79 @@ class Mib:
     def _ResetAllVars(self) -> None:
         for v in self._model.getVars():
             v.clear()
+    
+    def thread_m(self, keys:list, vars:list, descomp:set , nameToVar, _:queue.Queue):
+        sum = 0
+        for key in keys:
+            i = 0
+            for v in vars:
+                v.setEvent(key[i])
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in descomp:
+                p *= d.P(nameToVar)
+                
+            sum += p
+        _.put(sum)
+        
+    def marginal_tr(self,  names:tuple, events: list, lote_n = 10000, thread_n = 4) -> float:
+        # Crear una cola para comunicar los hilos
+        resultado_cola = queue.Queue()
+        sum = 0
+        for i,name in enumerate(names):
+            self._nameToVar[name].setMarginal(events[i])
+            
+        keys = []
+        count_lote = 0
+        
+        product_cc = 1
+        for v in self._model.getVars():
+            product_cc *= v.getCard()
+        
+        hilos = []
+        print(product_cc)
+        for k in product(*self._model.GetVars()):
+            
+            if count_lote < lote_n:
+                keys.append(k)
+                product_cc -= 1
+                count_lote += 1
+            
+            if len(hilos) < thread_n or product_cc == 0:
+                count_lote = 0
+                
+                vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
+                nameToVar = {}
+                for v in vars_copy:
+                    nameToVar[v.getName()] = v
+                    
+                hilo = threading.Thread(
+                    target=self.thread_m,
+                    args=(
+                        keys, 
+                        vars_copy, 
+                        self._model.getDescomp(), 
+                        nameToVar,
+                        resultado_cola)
+                )
+                hilos.append(hilo)
+            
+            elif len(hilos) == thread_n or product_cc == 0:
+                for hilo in hilos:
+                    hilo.start()
+                    
+                for hilo in hilos:
+                    hilo.join()
+                
+                hilos.clear()
+                    
+        # Obtener los resultados desde la cola
+        while not resultado_cola.empty():
+            sum += resultado_cola.get()
+                
+        return sum
     
     def marginal(self, names:tuple, events: list) -> float:
         """ Método para hacer la consulta de una marginal.
@@ -241,7 +326,7 @@ class Mib:
         values = [v.getValues() for v in vars]
         
         for value in product(*values):
-            table[value] = self.marginal(columns, list(value))
+            table[value] = self.marginal_tr(columns, list(value))
             
         return Distrib(vars, table, columns)
 
