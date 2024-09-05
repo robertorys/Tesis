@@ -155,7 +155,7 @@ class Specification:
         """
         return self._descomp
         
-    def GetVars(self) -> list:
+    def getValues(self) -> list:
         """ Método para obtener una lista del conjunto de los valores de las variables.
 
         Returns:
@@ -186,6 +186,7 @@ class Mib:
     def thread_m(self, keys:list, vars:list, descomp:set , nameToVar, _:queue.Queue):
         sum = 0
         for key in keys:
+            print(key)
             i = 0
             for v in vars:
                 v.setEvent(key[i])
@@ -214,41 +215,43 @@ class Mib:
             product_cc *= v.getCard()
         
         hilos = []
-        print(product_cc)
-        for k in product(*self._model.GetVars()):
+        for k in product(*self._model.getValues()):
             
             if count_lote < lote_n:
                 keys.append(k)
                 product_cc -= 1
                 count_lote += 1
             
-            if len(hilos) < thread_n or product_cc == 0:
-                count_lote = 0
-                
-                vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
-                nameToVar = {}
-                for v in vars_copy:
-                    nameToVar[v.getName()] = v
+            if product_cc == 0 or count_lote == lote_n:
+                if len(hilos) < thread_n:
+                    print(keys)
+                    count_lote = 0
                     
-                hilo = threading.Thread(
-                    target=self.thread_m,
-                    args=(
-                        keys, 
-                        vars_copy, 
-                        self._model.getDescomp(), 
-                        nameToVar,
-                        resultado_cola)
-                )
-                hilos.append(hilo)
-            
-            elif len(hilos) == thread_n or product_cc == 0:
-                for hilo in hilos:
-                    hilo.start()
-                    
-                for hilo in hilos:
-                    hilo.join()
+                    vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
+                    nameToVar = {}
+                    for v in vars_copy:
+                        nameToVar[v.getName()] = v
+                        
+                    hilo = threading.Thread(
+                        target=self.thread_m,
+                        args=(
+                            keys.copy(), 
+                            vars_copy, 
+                            self._model.getDescomp(), 
+                            nameToVar.copy(),
+                            resultado_cola)
+                    )
+                    hilos.append(hilo)
+                    keys.clear()
                 
-                hilos.clear()
+                elif len(hilos) == thread_n or product_cc == 0:
+                    for hilo in hilos:
+                        hilo.start()
+                        
+                    for hilo in hilos:
+                        hilo.join()
+                    
+                    hilos.clear()
                     
         # Obtener los resultados desde la cola
         while not resultado_cola.empty():
@@ -272,7 +275,7 @@ class Mib:
         for i,name in enumerate(names):
             self._nameToVar[name].setMarginal(events[i])
         
-        for k in product(*self._model.GetVars()):
+        for k in product(*self._model.getValues()):
             # Establecer los valores de los eventos.
             i = 0
             for v in self._model.getVars():

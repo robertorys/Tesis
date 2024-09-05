@@ -143,7 +143,7 @@ class Specification:
         """
         return self._descomp
         
-    def GetVars(self) -> list:
+    def getValues(self) -> list:
         """ Método para obtener una lista del conjunto de los valores de las variables.
 
         Returns:
@@ -187,7 +187,7 @@ class Mib:
         for i,name in enumerate(names):
             self._nameToVar[name].setMarginal(events[i])
         
-        for k in product(*self._model.GetVars()):
+        for k in product(*self._model.getValues()):
             # Establecer los valores de los eventos.
             i = 0
             for v in self._model.getVars():
@@ -209,7 +209,22 @@ class Mib:
 
         Args:
             vars_names (tuple): Conjunto del nombre de las variables de vars.
-            vars_values (tuple): Lista de los valores para las variables de vars.
+            vars_values (tfor k in product(*self._model.GetVars()):
+            # Establecer los valores de los eventos.
+            i = 0
+            for v in self._model.getVars():
+                v.setEvent(k[i])
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in self._model.getDescomp():
+                p *= d.P(self._nameToVar)
+            
+            sum += p
+        
+        self._ResetAllVars()
+        return sumuple): Lista de los valores para las variables de vars.
             indep_names (tuple): Conjunto del nombre de las variables de indep.
             indep_values (tuple): Lista de los valores para las variables de indep.
             
@@ -322,6 +337,32 @@ class Mib:
                 
         return columns_vars, vars_values, columns_indep, value_indep, p
     
+    def marginal_condHyp(self, columns_var, values_var, columns_indep, values_indep) -> float:
+        sum = 0
+        
+        for i,name in enumerate(columns_var):
+            self._nameToVar[name].setMarginal(values_var[i])
+        for i,name in enumerate(columns_indep):
+            self._nameToVar[name].setMarginal(values_indep[i])
+        
+        for k in product(*self._model.getValues()):
+            # Establecer los valores de los eventos.
+            i = 0
+            for v in self._model.getVars():
+                v.setEvent(k[i])
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in self._model.getDescomp():
+                p *= d.P(self._nameToVar)
+            
+            sum += p
+        
+        self._ResetAllVars()
+        return sum
+        
+    
     def condHyp(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
         """ Método para inferir el valor más probable de una hipótesis de una distribución condicional
         dado los valores de las observaciones.
@@ -341,12 +382,17 @@ class Mib:
         p = 0
         value_vars = None
         for vv in product(*values_vars):
-            p_vi = self.cond(columns_vars, vv, columns_indep, indep_values)
             
-            if p_vi > p:
+            p_vi = self.marginal_condHyp(columns_vars, vv, columns_indep, indep_values)
+            
+            if p == 0:
                 p = p_vi
                 value_vars = vv
-                
+            else: 
+                if p_vi / p > 1:
+                    p = p_vi
+                    value_vars = vv
+                               
         return (columns_vars, value_vars, p)
 
 class Question:
