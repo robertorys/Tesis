@@ -204,7 +204,7 @@ class Mib:
         self._ResetAllVars()
         return sum
 
-    def cond(self, vars_names:tuple, vars_values:tuple, indep_names:tuple, indep_values:tuple) -> float:
+    def cond(self, vars_names:tuple, vars_values:list, indep_names:tuple, indep_values:list) -> float:
         """ Método para hacer la consulta de una distribución conjunta.
 
         Args:
@@ -308,36 +308,7 @@ class Mib:
         
         return columns, value, p
     
-    def condObs(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
-        """ Método para inferir el valor más probable de una obersvación de una distribución condicional
-        dado los valores de las hipótesis
-
-        Args:
-            vars (tuple): Tupla de las variables de la distribución condicional.
-            vars_values (tuple): Tupla con los valores de las variables de la distribución.
-            indep (tuple): Tupla de las variables independientes de la distribución condicional.
-        Returns:
-            tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
-            el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
-        """
-        
-        columns_vars = tuple([v.getName() for v in vars])
-        columns_indep = tuple([v.getName() for v in indep])
-        
-        values_indep = [v.getValues() for v in indep]
-        
-        p = 0
-        value_indep = None
-        for vi in product(*values_indep):
-            p_vi = self.cond(columns_vars, vars_values, columns_indep, vi)
-            
-            if p_vi > p:
-                p = p_vi
-                value_indep = vi
-                
-        return columns_vars, vars_values, columns_indep, value_indep, p
-    
-    def marginal_condHyp(self, columns_var, values_var, columns_indep, values_indep) -> float:
+    def decision_cond(self, columns_var, values_var, columns_indep, values_indep) -> float:
         sum = 0
         
         for i,name in enumerate(columns_var):
@@ -361,6 +332,39 @@ class Mib:
         
         self._ResetAllVars()
         return sum
+    
+    def condObs(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
+        """ Método para inferir el valor más probable de una obersvación de una distribución condicional
+        dado los valores de las hipótesis.
+
+        Args:
+            vars (tuple): Tupla de las variables de la distribución condicional.
+            vars_values (tuple): Tupla con los valores de las variables de la distribución.
+            indep (tuple): Tupla de las variables independientes de la distribución condicional.
+        Returns:
+            tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
+            el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
+        """
+        
+        columns_vars = tuple([v.getName() for v in vars])
+        columns_indep = tuple([v.getName() for v in indep])
+        
+        values_indep = [v.getValues() for v in indep]
+        
+        p = 0
+        value_indep = None
+        for vi in product(*values_indep):
+            p_vv = self.decision_cond(columns_vars, vars_values, columns_indep, vi)
+        
+            if p == 0:
+                p = p_vv
+                value_indep = vi
+            else: 
+                if p_vv / p > 1:
+                    p = p_vv
+                    value_indep = vi
+                
+        return columns_indep, value_indep, p
         
     
     def condHyp(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
@@ -376,14 +380,15 @@ class Mib:
             el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
         """
         columns_vars = tuple([v.getName() for v in vars])
-        columns_indep = tuple([v.getName() for v in indep])
+        columns_indep = tuple([v.getNvars_namesame() for v in indep])
         
         values_vars = [v.getValues() for v in vars]
+        
         p = 0
         value_vars = None
         for vv in product(*values_vars):
             
-            p_vi = self.marginal_condHyp(columns_vars, vv, columns_indep, indep_values)
+            p_vi = self.decision_cond(columns_vars, vv, columns_indep, indep_values)
             
             if p == 0:
                 p = p_vi
@@ -393,7 +398,7 @@ class Mib:
                     p = p_vi
                     value_vars = vv
                                
-        return (columns_vars, value_vars, p)
+        return columns_vars, value_vars, p
 
 class Question:
     def __init__(self, sp: Specification) -> None:

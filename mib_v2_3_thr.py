@@ -46,7 +46,10 @@ class Var:
             return list(self._values)
     
     def getCard(self) -> int:
-        return len(self._values)
+        if self._know:
+            return len([self._event])
+        else:
+            return len(self._values)
     
     def setMarginal(self, event) -> None:
         """ Método para establecer un evento para el calculo de la marginal.
@@ -186,7 +189,6 @@ class Mib:
     def thread_m(self, keys:list, vars:list, descomp:set , nameToVar, _:queue.Queue):
         sum = 0
         for key in keys:
-            print(key)
             i = 0
             for v in vars:
                 v.setEvent(key[i])
@@ -200,12 +202,11 @@ class Mib:
             sum += p
         _.put(sum)
         
-    def marginal_tr(self,  names:tuple, events: list, lote_n = 10000, thread_n = 4) -> float:
+    def marginal_tr(self, lote_n = 10000, thread_n = 4) -> float:
         # Crear una cola para comunicar los hilos
         resultado_cola = queue.Queue()
+        
         sum = 0
-        for i,name in enumerate(names):
-            self._nameToVar[name].setMarginal(events[i])
             
         keys = []
         count_lote = 0
@@ -215,16 +216,16 @@ class Mib:
             product_cc *= v.getCard()
         
         hilos = []
+        
         for k in product(*self._model.getValues()):
             
             if count_lote < lote_n:
                 keys.append(k)
                 product_cc -= 1
                 count_lote += 1
-            
+                
             if product_cc == 0 or count_lote == lote_n:
                 if len(hilos) < thread_n:
-                    print(keys)
                     count_lote = 0
                     
                     vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
@@ -233,8 +234,8 @@ class Mib:
                         nameToVar[v.getName()] = v
                         
                     hilo = threading.Thread(
-                        target=self.thread_m,
-                        args=(
+                        target = self.thread_m,
+                        args = (
                             keys.copy(), 
                             vars_copy, 
                             self._model.getDescomp(), 
@@ -243,8 +244,9 @@ class Mib:
                     )
                     hilos.append(hilo)
                     keys.clear()
+                    nameToVar.clear()
                 
-                elif len(hilos) == thread_n or product_cc == 0:
+                if len(hilos) == thread_n or product_cc == 0:
                     for hilo in hilos:
                         hilo.start()
                         
@@ -257,39 +259,6 @@ class Mib:
         while not resultado_cola.empty():
             sum += resultado_cola.get()
                 
-        return sum
-    
-    def marginal(self, names:tuple, events: list) -> float:
-        """ Método para hacer la consulta de una marginal.
-
-        Args:
-            names (tuple): Conjunto del nombre de las variables para la marginal.
-            events (tuple): Lista de los valores para las variables de la marginal.
-            
-        Returns:
-            float: Valor de la probabilidad de la marginal.
-        """
-        
-        sum = 0
-        
-        for i,name in enumerate(names):
-            self._nameToVar[name].setMarginal(events[i])
-        
-        for k in product(*self._model.getValues()):
-            # Establecer los valores de los eventos.
-            i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
-                i += 1
-            
-            # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
-            sum += p
-        
-        self._ResetAllVars()
         return sum
 
     def cond(self, vars_names:tuple, vars_values:tuple, indep_names:tuple, indep_values:tuple) -> float:
@@ -306,12 +275,21 @@ class Mib:
         """
         
         # Calcular el numerados
-        vars_u = tuple(list(vars_names) + list(indep_names))
-        vals_u = list(vars_values) + list(indep_values)
-        num = self.marginal(vars_u, vals_u)
+        for i,name in enumerate(vars_names):
+            self._nameToVar[name].setMarginal(vars_values[i])
+        for i,name in enumerate(indep_names):
+            self._nameToVar[name].setMarginal(indep_values[i])
+        
+        num = self.marginal_tr()
+        
+        self._ResetAllVars()
+        
         
         # Calcular el denominador
-        den = self.marginal(indep_names, list(indep_values))
+        for i,name in enumerate(indep_names):
+            self._nameToVar[name].setMarginal(indep_values[i])
+            
+        den = self.marginal_tr()
         
         return num/den
     
@@ -329,8 +307,15 @@ class Mib:
         values = [v.getValues() for v in vars]
         
         for value in product(*values):
-            table[value] = self.marginal_tr(columns, list(value))
+            l_value = list(value)
             
+            for i,name in enumerate(columns):
+                self._nameToVar[name].setMarginal(l_value[i])
+                
+            table[value] = self.marginal_tr()
+            
+            self._ResetAllVars()
+                
         return Distrib(vars, table, columns)
 
     def condDistrib(self, vars:set, indep:set) -> CondDistrib:
@@ -373,17 +358,35 @@ class Mib:
         p = 0
         value = None
         for vv in product(*vars_values):
-            p_vv = self.marginal(columns, list(vv))
+            l_vv = list(vv)
+            for i,name in enumerate(columns):
+                self._nameToVar[name].setMarginal(l_vv[i])
+                
+            p_vv = self.marginal_tr()
 
+            self._ResetAllVars()
+            
             if p_vv > p:
                 p = p_vv
                 value = vv
         
         return columns, value, p
     
+    def decision_cond(self, columns_var, values_var, columns_indep, values_indep) -> float:
+        
+        for i,name in enumerate(columns_var):
+            self._nameToVar[name].setMarginal(values_var[i])
+        for i,name in enumerate(columns_indep):
+            self._nameToVar[name].setMarginal(values_indep[i])
+        
+        sum = self.marginal_tr()
+        
+        self._ResetAllVars()
+        return sum
+    
     def condObs(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
         """ Método para inferir el valor más probable de una obersvación de una distribución condicional
-        dado los valores de las hipótesis
+        dado los valores de las hipótesis.
 
         Args:
             vars (tuple): Tupla de las variables de la distribución condicional.
@@ -402,13 +405,18 @@ class Mib:
         p = 0
         value_indep = None
         for vi in product(*values_indep):
-            p_vi = self.cond(columns_vars, vars_values, columns_indep, vi)
-            
-            if p_vi > p:
-                p = p_vi
+            p_vv = self.decision_cond(columns_vars, vars_values, columns_indep, vi)
+        
+            if p == 0:
+                p = p_vv
                 value_indep = vi
+            else: 
+                if p_vv / p > 1:
+                    p = p_vv
+                    value_indep = vi
                 
-        return columns_vars, vars_values, columns_indep, value_indep, p
+        return columns_indep, value_indep, p
+        
     
     def condHyp(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
         """ Método para inferir el valor más probable de una hipótesis de una distribución condicional
@@ -426,17 +434,23 @@ class Mib:
         columns_indep = tuple([v.getName() for v in indep])
         
         values_vars = [v.getValues() for v in vars]
+        
         p = 0
         value_vars = None
         for vv in product(*values_vars):
-            p_vi = self.cond(columns_vars, vv, columns_indep, indep_values)
             
-            if p_vi > p:
+            p_vi = self.decision_cond(columns_vars, vv, columns_indep, indep_values)
+            
+            if p == 0:
                 p = p_vi
                 value_vars = vv
-                
-        return (columns_vars, value_vars, p)
-
+            else: 
+                if p_vi / p > 1:
+                    p = p_vi
+                    value_vars = vv
+                               
+        return columns_vars, value_vars, p
+    
 class Question:
     def __init__(self, sp: Specification) -> None:
         self._sp = sp
