@@ -5,7 +5,7 @@
 #python_version : 3.10.12
 #==============================================================================
 from itertools import product
-import threading
+import math
 
 class Var:
     """Clase para el manejo de las variables (establecer y manejar los eventos).
@@ -197,7 +197,7 @@ class Mib:
             # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
+                p += math.log(d.P(self._nameToVar))
             
             sum += p
         
@@ -209,22 +209,7 @@ class Mib:
 
         Args:
             vars_names (tuple): Conjunto del nombre de las variables de vars.
-            vars_values (tfor k in product(*self._model.GetVars()):
-            # Establecer los valores de los eventos.
-            i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
-                i += 1
-            
-            # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
-            sum += p
-        
-        self._ResetAllVars()
-        return sumuple): Lista de los valores para las variables de vars.
+            vars_values (tuple): Lista de los valores para las variables de vars.
             indep_names (tuple): Conjunto del nombre de las variables de indep.
             indep_values (tuple): Lista de los valores para las variables de indep.
             
@@ -240,7 +225,7 @@ class Mib:
         # Calcular el denominador
         den = self.marginal(indep_names, list(indep_values))
         
-        return num/den
+        return num / den
     
     def marginalDistrib(self, vars:set) -> Distrib:
         """ Método para hacer la consulta de una distribución de la conjunta de vars.
@@ -326,12 +311,13 @@ class Mib:
             # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
+                p += math.log(d.P(self._nameToVar))
             
             sum += p
         
         self._ResetAllVars()
         return sum
+
     
     def condObs(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
         """ Método para inferir el valor más probable de una obersvación de una distribución condicional
@@ -380,7 +366,7 @@ class Mib:
             el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
         """
         columns_vars = tuple([v.getName() for v in vars])
-        columns_indep = tuple([v.getName() for v in indep])
+        columns_indep = tuple([v.getNvars_namesame() for v in indep])
         
         values_vars = [v.getValues() for v in vars]
         

@@ -5,7 +5,10 @@
 #python_version : 3.10.12
 #==============================================================================
 from itertools import product
-import threading
+import multiprocessing as mp
+import copy
+import queue
+import math
 
 class Var:
     """Clase para el manejo de las variables (establecer y manejar los eventos).
@@ -30,14 +33,6 @@ class Var:
     
     def setEvent(self, event):
         self._event = event
-        
-    def setMarginal(self, event) -> None:
-        """ Método para establecer un evento para el calculo de la marginal.
-        Args:
-            value (any): Valor que representa un evento. 
-        """
-        self._event = event
-        self._know = True
     
     def getValues(self) -> list:
         """ Método obtner los valores de la variable para calcular la marginal.
@@ -49,6 +44,20 @@ class Var:
             return [self._event]
         else:
             return list(self._values)
+    
+    def getCard(self) -> int:
+        if self._know:
+            return len([self._event])
+        else:
+            return len(self._values)
+    
+    def setMarginal(self, event) -> None:
+        """ Método para establecer un evento para el calculo de la marginal.
+        Args:
+            value (any): Valor que representa un evento. 
+        """
+        self._event = event
+        self._know = True
     
     def clear(self) -> None:
         self._event = None
@@ -80,6 +89,9 @@ class Distrib:
         """
         key = [nameToVar[name].getEvent() for name in self._columns]
         return self._table[tuple(key)]
+    
+    def P_(self, var_key):
+        return self._table[var_key]
 
 class CondDistrib:
     """ Clase para el manejo de distibuciones condicionales.
@@ -114,6 +126,9 @@ class CondDistrib:
         vars_key = [nameToVar[name].getEvent() for name in self._columns_vars]
         indep_key = [nameToVar[name].getEvent() for name in self._columns_indep]
         return self._table[tuple(indep_key)][tuple(vars_key)]
+    
+    def P_(self, var_key, indep_key):
+        return self._table[indep_key][var_key]
     
 class Specification:
     """ Clase el manejo de la especificación de un pragrama Bayesiano.
@@ -171,60 +186,89 @@ class Mib:
         for v in self._model.getVars():
             v.clear()
     
-    def marginal(self, names:tuple, events: list) -> float:
-        """ Método para hacer la consulta de una marginal.
-
-        Args:
-            names (tuple): Conjunto del nombre de las variables para la marginal.
-            events (tuple): Lista de los valores para las variables de la marginal.
-            
-        Returns:
-            float: Valor de la probabilidad de la marginal.
-        """
-        
+    def multip_m(self, keys:list, vars:list, descomp:set , nameToVar, _:mp.Queue):
         sum = 0
-        
-        for i,name in enumerate(names):
-            self._nameToVar[name].setMarginal(events[i])
-        
-        for k in product(*self._model.getValues()):
-            # Establecer los valores de los eventos.
+        for key in keys:
             i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
+            for v in vars:
+                v.setEvent(key[i])
                 i += 1
             
             # Calcular la probabilidad con los valores de k.
             p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
+            for d in descomp:
+                p *= d.P(nameToVar)
+                
             sum += p
+        _.put(sum)
         
-        self._ResetAllVars()
+    def marginal_mp(self, lote_n = 1000, thread_n = 8) -> float:
+        # Crear una cola para comunicar los hilos
+        resultado_cola = mp.Queue()
+        
+        sum = 0
+            
+        keys = []
+        count_lote = 0
+        
+        product_cc = 1
+        for v in self._model.getVars():
+            product_cc *= v.getCard()
+        
+        hilos = []
+        
+        for k in product(*self._model.getValues()):
+            
+            if count_lote < lote_n:
+                keys.append(k)
+                product_cc -= 1
+                count_lote += 1
+                
+            if product_cc == 0 or count_lote == lote_n:
+                if len(hilos) < thread_n:
+                    count_lote = 0
+                    
+                    vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
+                    nameToVar = {}
+                    for v in vars_copy:
+                        nameToVar[v.getName()] = v
+                        
+                    hilo =  mp.Process(
+                        target = self.multip_m,
+                        args = (
+                            keys.copy(), 
+                            vars_copy, 
+                            self._model.getDescomp(), 
+                            nameToVar.copy(),
+                            resultado_cola
+                            )
+                    )
+                    
+                    hilos.append(hilo)
+                    keys.clear()
+                    nameToVar.clear()
+                
+                if len(hilos) == thread_n or product_cc == 0:
+                    for hilo in hilos:
+                        hilo.start()
+                        
+                    for hilo in hilos:
+                        hilo.join()
+                    
+                    hilos.clear()
+                    
+        # Obtener los resultados desde la cola
+        while not resultado_cola.empty():
+            sum += resultado_cola.get()
+                
         return sum
 
-    def cond(self, vars_names:tuple, vars_values:list, indep_names:tuple, indep_values:list) -> float:
+    def cond(self, vars_names:tuple, vars_values:tuple, indep_names:tuple, indep_values:tuple) -> float:
         """ Método para hacer la consulta de una distribución conjunta.
 
         Args:
             vars_names (tuple): Conjunto del nombre de las variables de vars.
-            vars_values (tfor k in product(*self._model.GetVars()):
-            # Establecer los valores de los eventos.
-            i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
-                i += 1
-            
-            # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
-            sum += p
-        
-        self._ResetAllVars()
-        return sumuple): Lista de los valores para las variables de vars.
+            vars_values (tuple): Lista de los valores para las variables de vars.
             indep_names (tuple): Conjunto del nombre de las variables de indep.
             indep_values (tuple): Lista de los valores para las variables de indep.
             
@@ -233,12 +277,21 @@ class Mib:
         """
         
         # Calcular el numerados
-        vars_u = tuple(list(vars_names) + list(indep_names))
-        vals_u = list(vars_values) + list(indep_values)
-        num = self.marginal(vars_u, vals_u)
+        for i,name in enumerate(vars_names):
+            self._nameToVar[name].setMarginal(vars_values[i])
+        for i,name in enumerate(indep_names):
+            self._nameToVar[name].setMarginal(indep_values[i])
+        
+        num = self.marginal_mp()
+        
+        self._ResetAllVars()
+        
         
         # Calcular el denominador
-        den = self.marginal(indep_names, list(indep_values))
+        for i,name in enumerate(indep_names):
+            self._nameToVar[name].setMarginal(indep_values[i])
+            
+        den = self.marginal_mp()
         
         return num/den
     
@@ -256,8 +309,15 @@ class Mib:
         values = [v.getValues() for v in vars]
         
         for value in product(*values):
-            table[value] = self.marginal(columns, list(value))
+            l_value = list(value)
             
+            for i,name in enumerate(columns):
+                self._nameToVar[name].setMarginal(l_value[i])
+                
+            table[value] = self.marginal_mp()
+            
+            self._ResetAllVars()
+                
         return Distrib(vars, table, columns)
 
     def condDistrib(self, vars:set, indep:set) -> CondDistrib:
@@ -300,8 +360,14 @@ class Mib:
         p = 0
         value = None
         for vv in product(*vars_values):
-            p_vv = self.marginal(columns, list(vv))
+            l_vv = list(vv)
+            for i,name in enumerate(columns):
+                self._nameToVar[name].setMarginal(l_vv[i])
+                
+            p_vv = self.marginal_mp()
 
+            self._ResetAllVars()
+            
             if p_vv > p:
                 p = p_vv
                 value = vv
@@ -309,26 +375,13 @@ class Mib:
         return columns, value, p
     
     def decision_cond(self, columns_var, values_var, columns_indep, values_indep) -> float:
-        sum = 0
         
         for i,name in enumerate(columns_var):
             self._nameToVar[name].setMarginal(values_var[i])
         for i,name in enumerate(columns_indep):
             self._nameToVar[name].setMarginal(values_indep[i])
         
-        for k in product(*self._model.getValues()):
-            # Establecer los valores de los eventos.
-            i = 0
-            for v in self._model.getVars():
-                v.setEvent(k[i])
-                i += 1
-            
-            # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self._model.getDescomp():
-                p *= d.P(self._nameToVar)
-            
-            sum += p
+        sum = self.marginal_mp()
         
         self._ResetAllVars()
         return sum
@@ -399,7 +452,7 @@ class Mib:
                     value_vars = vv
                                
         return columns_vars, value_vars, p
-
+    
 class Question:
     def __init__(self, sp: Specification) -> None:
         self._sp = sp
