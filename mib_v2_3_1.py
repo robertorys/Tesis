@@ -6,6 +6,9 @@
 #==============================================================================
 from itertools import product
 import math
+import multiprocessing as mp
+import copy
+import math
 
 class Var:
     """Clase para el manejo de las variables (establecer y manejar los eventos).
@@ -165,6 +168,161 @@ class Mib:
         for v in self._model.getVars():
             v.clear()
     
+    def multip_m(self, keys:list, vars:list, descomp:set , nameToVar, _:mp.Queue):
+        sum = 0
+        for key in keys:
+            i = 0
+            for v in vars:
+                v.setEvent(key[i])
+                i += 1
+            
+            # Calcular la probabilidad con los valores de k.
+            p = 1
+            for d in descomp:
+                p *= d.P(nameToVar)
+                
+            sum += p
+        _.put(sum)
+        
+    def inference_mp(self, lote_n, thread_n) -> float:
+        # Crear una cola para comunicar los hilos
+        resultado_cola = mp.Queue()
+        
+        sum = 0
+            
+        keys = []
+        count_lote = 0
+        
+        product_cc = 1
+        for v in self._model.getVars():
+            product_cc *= v.getCard()
+        
+        hilos = []
+        
+        for k in product(*self._model.getValues()):
+            
+            if count_lote < lote_n:
+                keys.append(k)
+                product_cc -= 1
+                count_lote += 1
+                
+            if product_cc == 0 or count_lote == lote_n:
+                if len(hilos) < thread_n:
+                    count_lote = 0
+                    
+                    vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
+                    nameToVar = {}
+                    for v in vars_copy:
+                        nameToVar[v.getName()] = v
+                        
+                    hilo =  mp.Process(
+                        target = self.multip_m,
+                        args = (
+                            keys.copy(), 
+                            vars_copy, 
+                            self._model.getDescomp(), 
+                            nameToVar.copy(),
+                            resultado_cola
+                            )
+                    )
+                    
+                    hilos.append(hilo)
+                    keys.clear()
+                    nameToVar.clear()
+                
+                if len(hilos) == thread_n or product_cc == 0:
+                    for hilo in hilos:
+                        hilo.start()
+                        
+                    for hilo in hilos:
+                        hilo.join()
+                    
+                    hilos.clear()
+                    
+        # Obtener los resultados desde la cola
+        while not resultado_cola.empty():
+            sum += resultado_cola.get()
+                
+        return sum
+    
+    def marginal_mp(self, vars_names:tuple, vars_values:tuple, lote_n = 1000, thread_n = 8) -> float:
+        """ Método para hacer la consulta de una distribución.
+
+        Args:
+            vars_names (tuple): Conjunto del nombre de las variables de vars.
+            vars_values (tuple): Lista de los valores para las variables de vars.
+            
+        Returns:
+            float: Valor de la probabilidad de la marginal.
+        """
+        for i,name in enumerate(vars_names):
+            self._nameToVar[name].setMarginal(vars_values[i])
+            
+        p = self.inference_mp(lote_n, thread_n)
+        self._ResetAllVars()
+        return p
+        
+    
+    def joint_mp(self, vars1_names:tuple, vars1_values:tuple, vars2_names:tuple, vars2_values:tuple, lote_n = 1000, thread_n = 8) -> float:
+        """ Método para calcular la marginal sobre dos cunjontos de variables.
+
+        Args:
+            vars1_columns (tuple): Tupla de los nombres de las variables del primer conjunto de variables.
+            vars1_values (list): _description_
+            vars2_columns (tuple): Tupla de los nombres de las variables del segundo conjunto de variables.
+            vars2_values (list): _description_
+
+        Returns:
+            float: Valor de la probabilidad de la marginal.
+        """
+        
+        for i,name in enumerate(vars1_names):
+            self._nameToVar[name].setMarginal(vars1_values[i])
+        for i,name in enumerate(vars2_names):
+            self._nameToVar[name].setMarginal(vars2_values[i])
+    
+        p = self.inference_mp(lote_n, thread_n)
+        self._ResetAllVars()
+        return p
+    
+    def cond_mp(self, vars_names:tuple, vars_values:tuple, indep_names:tuple, indep_values:tuple, lote_n = 1000, thread_n = 8) -> float:
+        """ Método para hacer la consulta de una distribución condicional.
+
+        Args:
+            vars_names (tuple): Conjunto del nombre de las variables de vars.
+            vars_values (tuple): Lista de los valores para las variables de vars.
+            indep_names (tuple): Conjunto del nombre de las variables de indep.
+            indep_values (tuple): Lista de los valores para las variables de indep.
+            
+        Returns:
+            float: Valor de la probabilidad de la condicional.
+        """
+        num = mp.Queue()
+        den = mp.Queue()
+        def joint_mp_aux(vars_names, vars_values, indep_names, indep_values, lote_n, thread_n, queue):
+            queue.put(self.joint_mp(vars_names, vars_values, indep_names, indep_values, lote_n, thread_n))
+            
+        # Calcular el numerados
+        processNum = mp.Process(
+            target = joint_mp_aux, 
+            args = (vars_names, vars_values, indep_names, indep_values, lote_n, thread_n, num)
+        )
+        
+        def marginal_mp_aux(vars_names, vars_values, lote_n, thread_n, queue):
+            queue.put(self.marginal_mp(vars_names, vars_values, lote_n, thread_n))
+        # Calcular el denominador
+        processDen = mp.Process(
+            target = marginal_mp_aux, 
+            args = (vars_names, vars_values, lote_n, thread_n, num)
+        )
+        
+        processNum.start()
+        processDen.start()
+        processNum.join()
+        processDen.join()
+        
+        return num.get() / den.get()
+    
     def marginal(self, names:tuple, events: list) -> float:
         """ Método para hacer la consulta de una marginal.
 
@@ -191,7 +349,6 @@ class Mib:
             # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self._model.getDescomp():
-                # p *= d.P(self._nameToVar)
                 p += math.log(d.P(self._nameToVar))
             
             sum += p
@@ -228,7 +385,6 @@ class Mib:
             # Calcular la probabilidad con los valores de k.
             p = 1
             for d in self._model.getDescomp():
-                # p *= d.P(self._nameToVar)
                 p += math.log(d.P(self._nameToVar))
             
             sum += p
@@ -316,6 +472,30 @@ class Mib:
         value = None
         for vv in product(*vars_values):
             p_vv = self.marginal(columns, list(vv))
+
+            if p_vv > p:
+                p = p_vv
+                value = vv
+        
+        return columns, value, p
+    
+    def marginal_inference_mp(self, vars:set, lote_n: int = 1000, thread_n: int = 8) -> tuple:
+        """ Método para inferir el valor más probable de una distribución marginal o conjunta.
+
+        Args:
+            vars (set): Conjunto de variables de la distribución.
+
+        Returns:
+            tuple ((tuple, tuple, float)): El primer valor es la tupla de nombres, la segunda tupla representa sus valores
+            y el último elemento es la probabilidad.
+        """
+        columns = tuple([v.getName() for v in vars])
+        vars_values = [v.getValues() for v in vars]
+        
+        p = 0
+        value = None
+        for vv in product(*vars_values):
+            p_vv = self.marginal_mp(columns, list(vv), lote_n, thread_n)
 
             if p_vv > p:
                 p = p_vv
@@ -436,7 +616,36 @@ class Question:
                 return mib.marginal_inference(set(vars))
         else:
             if values_var and values_indep:
-                return mib.joint_marginal(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
+                return mib.cond(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
+            elif values_var and not values_indep:
+                return mib.condObs_inference(vars, values_var, indep)
+            elif not values_var and values_indep:
+                return mib.condHyp_inference(vars, indep, values_indep)
+            
+        print("Consulta no valida")
+    
+    def Query_mp(self, vars:tuple, indep:tuple = None, values_var:tuple = None, values_indep:tuple = None):
+        """ Método para generar una consulta sobre los valores más probables o.
+        
+        Args:
+            vars (tuple): Tupla de variables (vars).
+            indep (tuple, optional): Tupla de variables independientes. Defaults to None.
+            values_var (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
+            values_indep (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
+
+        Returns:
+            tuple : Tupla con los datos de las consultas.
+        """
+        
+        mib = Mib(self._sp)
+        if not indep:
+            if values_var:
+                return mib.marginal_mp(tuple([v.getName() for v in vars]), list(values_var))
+            else:
+                return mib.marginal_inference_mp(set(vars))
+        else:
+            if values_var and values_indep:
+                return mib.cond_mp(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
             elif values_var and not values_indep:
                 return mib.condObs_inference(vars, values_var, indep)
             elif not values_var and values_indep:
