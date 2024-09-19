@@ -430,6 +430,24 @@ class Mib:
             table[value] = self.marginal(columns, list(value))
             
         return Distrib(vars, table, columns)
+    
+    def Distrib_inference_mp(self, vars:set, lote_n=1000, thread_n=8) -> Distrib:
+        """ Método para hacer la consulta de una distribución de la conjunta de vars.
+
+        Args:
+            vars (set): Conjunto de variables para la distribución.
+
+        Returns:
+            Distrib: Dsitribución marginal calculada.
+        """
+        table = {}
+        columns = tuple([v.getName() for v in vars])
+        values = [v.getValues() for v in vars]
+        
+        for value in product(*values):
+            table[value] = self.marginal_mp(columns, list(value), lote_n, thread_n)
+            
+        return Distrib(vars, table, columns)
 
     def condDistrib_inference(self, vars:set, indep:set) -> CondDistrib:
         """ Método para hacer la consulta de una distribución condicional.
@@ -452,6 +470,30 @@ class Mib:
             table[vi] = {}
             for vv in product(*values_var):
                 table[vi][vv] = self.cond(columns_vars, vv, columns_indep, vi)
+                
+        return CondDistrib(vars, indep, table, columns_vars, columns_indep)
+    
+    def condDistrib_inference_mp(self, vars:set, indep:set, lote_n=1000, thread_n=8) -> CondDistrib:
+        """ Método para hacer la consulta de una distribución condicional.
+
+        Args:
+            vars (set): Conjunto de variables de las hipótesis.
+            indep (set): Conjunto de varibales de las observaciones.
+            
+        Returns:
+            CondDistrib: Distribución condicional.
+        """
+        columns_vars = tuple([v.getName() for v in vars])
+        columns_indep = tuple([v.getName() for v in indep])
+        
+        values_var = [v.getValues() for v in vars]
+        values_indep = [v.getValues() for v in indep]
+        
+        table = {}
+        for vi in product(*values_indep):
+            table[vi] = {}
+            for vv in product(*values_var):
+                table[vi][vv] = self.cond_mp(columns_vars, vv, columns_indep, vi, lote_n, thread_n)
                 
         return CondDistrib(vars, indep, table, columns_vars, columns_indep)
     
@@ -580,7 +622,7 @@ class Question:
     def __init__(self, sp: Specification) -> None:
         self._sp = sp
     
-    def DistributionQuery(self, vars:set, indep:set = None):
+    def DistributionQuery(self, vars:set, indep:set = None, ):
         """ Método para generar una consulta que generar una distribución.
 
         Args:
@@ -596,59 +638,75 @@ class Question:
         else:
             return mib.condDistrib_inference(vars, indep)
         
-    def Query(self, vars:tuple, indep:tuple = None, values_var:tuple = None, values_indep:tuple = None):
+    def DistributionQuery_mp(self, vars:set, indep:set = None, lote_n=1000, thread_n=8):
+        """ Método para generar una consulta que generar una distribución.
+
+        Args:
+            vars (set): Conjunto de variables.
+            indep (set (optional)): Conjunto de variables independientes. Defaults to None.
+
+        Returns:
+            Distrib | CondDistrib: Distribución consultada.
+        """
+        mib = Mib(self._sp)
+        if not indep:
+            return mib.Distrib_inference_mp(vars, lote_n, thread_n)
+        else:
+            return mib.condDistrib_inference(vars, indep, lote_n, thread_n)
+        
+    def Query(self, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
         """ Método para generar una consulta sobre los valores más probables o.
         
         Args:
             vars (tuple): Tupla de variables (vars).
             indep (tuple, optional): Tupla de variables independientes. Defaults to None.
-            values_var (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
-            values_indep (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
+            vars_values (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
+            indep_values (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
 
         Returns:
             tuple : Tupla con los datos de las consultas.
         """
         mib = Mib(self._sp)
         if not indep:
-            if values_var:
-                return mib.marginal(tuple([v.getName() for v in vars]), list(values_var))
+            if vars_values:
+                return mib.marginal(tuple([v.getName() for v in vars]), list(vars_values))
             else:
                 return mib.marginal_inference(set(vars))
         else:
-            if values_var and values_indep:
-                return mib.cond(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
-            elif values_var and not values_indep:
-                return mib.condObs_inference(vars, values_var, indep)
-            elif not values_var and values_indep:
-                return mib.condHyp_inference(vars, indep, values_indep)
+            if vars_values and indep_values:
+                return mib.cond(tuple([v.getName() for v in vars]), vars_values, tuple([v.getName() for v in indep]), indep_values)
+            elif vars_values and not indep_values:
+                return mib.condObs_inference(vars, vars_values, indep)
+            elif not vars_values and indep_values:
+                return mib.condHyp_inference(vars, indep, indep_values)
             
         print("Consulta no valida")
     
-    def Query_mp(self, vars:tuple, indep:tuple = None, values_var:tuple = None, values_indep:tuple = None):
+    def Query_mp(self, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None, lote_n=1000, thread_n=8):
         """ Método para generar una consulta sobre los valores más probables o.
         
         Args:
             vars (tuple): Tupla de variables (vars).
             indep (tuple, optional): Tupla de variables independientes. Defaults to None.
-            values_var (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
-            values_indep (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
-
+            values_vvars_valuesar (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
+            indep_values (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
+            lote_n
         Returns:
             tuple : Tupla con los datos de las consultas.
         """
         
         mib = Mib(self._sp)
         if not indep:
-            if values_var:
-                return mib.marginal_mp(tuple([v.getName() for v in vars]), list(values_var))
+            if vars_values:
+                return mib.marginal_mp(tuple([v.getName() for v in vars]), list(vars_values))
             else:
                 return mib.marginal_inference_mp(set(vars))
         else:
-            if values_var and values_indep:
-                return mib.cond_mp(tuple([v.getName() for v in vars]), values_var, tuple([v.getName() for v in indep]), values_indep)
-            elif values_var and not values_indep:
-                return mib.condObs_inference(vars, values_var, indep)
-            elif not values_var and values_indep:
-                return mib.condHyp_inference(vars, indep, values_indep)
+            if vars_values and indep_values:
+                return mib.cond_mp(tuple([v.getName() for v in vars]), vars_values, tuple([v.getName() for v in indep]), indep_values)
+            elif vars_values and not indep_values:
+                return mib.condObs_inference(vars, vars_values, indep)
+            elif not vars_values and indep_values:
+                return mib.condHyp_inference(vars, indep, indep_values)
             
         print("Consulta no valida")
