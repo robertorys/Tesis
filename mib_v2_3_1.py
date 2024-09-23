@@ -361,7 +361,7 @@ class Mib:
                     p = p_vv
                     value_indep = vi
                 
-        return columns_indep, value_indep, p
+        return columns_indep, value_indep, p / self.marginal(columns_indep, value_indep)
     
     def condHyp_inference(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
         """ Método para inferir el valor más probable de una hipótesis de una distribución condicional
@@ -394,7 +394,7 @@ class Mib:
                     p = p_vi
                     value_vars = vv
                                
-        return columns_vars, value_vars, p
+        return columns_vars, value_vars, p / self.marginal(columns_indep, indep_values)
     
     def joint_inference(self, vars:tuple, vars_values:tuple, vars_:tuple) -> tuple:
         """ Método para inferir el valor más probable de distribución conjunta dado los valores de algunas variables.
@@ -438,7 +438,16 @@ class MibMp(Mib):
         self.process_n = procces_n
         super().__init__(model)
     
-    def multip_m(self, keys:list, vars:list, descomp:set , nameToVar, _:mp.Queue):
+    def marginal_p(self, keys:list, vars:list, descomp:set, nameToVar: dict, _:mp.Queue):
+        """ Método para los subprecesos para calcular la margial.
+
+        Args:
+            keys (list): Lista de un sub conjunto de llaves para caclcular la marginal.
+            vars (list): Copia de las vairiables.
+            descomp (set): Distribuciones de la descomposición.
+            nameToVar (dict): Diccionario que enlaza el nombre de la varible con el objeto de la variable.
+            _ (mp.Queue): Cola para guardar el resultado.
+        """
         sum = 0
         for key in keys:
             i = 0
@@ -446,7 +455,7 @@ class MibMp(Mib):
                 v.setEvent(key[i])
                 i += 1
             
-            # Calcular la probabilidad con los valores de k.
+            # Calcular la probabilidad con los valores de key.
             p = 1
             for d in descomp:
                 p *= d.P(nameToVar)
@@ -454,30 +463,37 @@ class MibMp(Mib):
             sum += p
         _.put(sum)
     
-    def inference_mp(self) -> float:
-        # Crear una cola para comunicar los hilos
-        resultado_cola = mp.Queue()
+    def marginal_mp(self) -> float:
+        """ Método para realizar la marginal con multples procesos. 
+
+        Returns:
+            float: Valor de probabilidad.
+        """
+        # Crear una cola para el resultado de los procesos.
+        queue = mp.Queue()
         
         sum = 0
             
         keys = []
         count_lote = 0
         
+        # Calcular la cantidad de llaves.
         product_cc = 1
         for v in self._model.getVars():
             product_cc *= v.getCard()
         
-        hilos = []
+        processes = []
         
         for k in product(*self._model.getValues()):
-            
+            # Guardad llaves.
             if count_lote < self.lote_n:
                 keys.append(k)
                 product_cc -= 1
                 count_lote += 1
                 
             if product_cc == 0 or count_lote == self.lote_n:
-                if len(hilos) < self.process_n:
+                # Generar procesos.
+                if len(processes) < self.process_n:
                     count_lote = 0
                     
                     vars_copy = [copy.deepcopy(v) for v in self._model.getVars()]
@@ -485,33 +501,36 @@ class MibMp(Mib):
                     for v in vars_copy:
                         nameToVar[v.getName()] = v
                         
-                    hilo =  mp.Process(
-                        target = self.multip_m,
+                    process =  mp.Process(
+                        target = self.marginal_p,
                         args = (
                             keys.copy(), 
                             vars_copy.copy(), 
                             self._model.getDescomp(), 
                             nameToVar.copy(),
-                            resultado_cola
+                            queue
                             )
                     )
                     
-                    hilos.append(hilo)
+                    processes.append(process)
+                    
                     keys.clear()
+                    vars_copy.clear() 
                     nameToVar.clear()
                 
-                if len(hilos) == self.process_n or product_cc == 0:
-                    for hilo in hilos:
-                        hilo.start()
+                # Ejecutar los procesos.
+                if len(processes) == self.process_n or product_cc == 0:
+                    for process in processes:
+                        process.start()
                         
-                    for hilo in hilos:
-                        hilo.join()
+                    for process in processes:
+                        process.join()
                     
-                    hilos.clear()
+                    processes.clear()
                     
-        # Obtener los resultados desde la cola
-        while not resultado_cola.empty():
-            sum += resultado_cola.get()
+        # Obtener los resultados desde la cola.
+        while not queue.empty():
+            sum += queue.get()
                 
         return sum
 
@@ -528,7 +547,8 @@ class MibMp(Mib):
         for i,name in enumerate(colum):
             self._nameToVar[name].setMarginal(values[i])
             
-        p = self.inference_mp()
+        p = self.marginal_mp()
+        
         super()._ResetAllVars()
         return p
         
@@ -549,7 +569,7 @@ class MibMp(Mib):
         for i,name in enumerate(vars2_columns):
             self._nameToVar[name].setMarginal(vars2_values[i])
     
-        p = self.inference_mp()
+        p = self.marginal_mp()
         
         super()._ResetAllVars()
         return p
