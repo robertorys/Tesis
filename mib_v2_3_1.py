@@ -525,12 +525,12 @@ class MibMp(Mib):
                         
                     for process in processes:
                         process.join()
+                        
+                    # Obtener los resultados desde la cola.
+                    while not queue.empty():
+                        sum += queue.get()
                     
                     processes.clear()
-                    
-        # Obtener los resultados desde la cola.
-        while not queue.empty():
-            sum += queue.get()
                 
         return sum
 
