@@ -18,47 +18,48 @@ archivos,nombres = tp.carga_cuentos(archivos)
 df_train = tp.lee_cuentos(archivos)
 
 # Tests
-archivos = glob.glob('./Test/El Caballo y el Lobo.txt')
+archivos = glob.glob('./Test/*')
 archivos,nombres = tp.carga_cuentos(archivos)
 df_test = tp.lee_cuentos(archivos,test=True)
 
-def df_autores(autores:list = None) -> pd.DataFrame:
+def new_df_train(autores:list) -> pd.DataFrame:
+    df_train_a = df_train.copy()
     conds = []
-    
-    if not autores:
-        return df_train
-    
-    for a in autores:
-        conds.append(df_train['autor'] == a)
-    
+    for autor in autores:
+        conds.append(df_train_a['autor'] == autor)
+        
     filt = conds[0]
     for cond in conds[1:]:
-            filt |= cond
+        filt |= cond
     
-    return df_train[filt]
+    return df_train_a[filt]
 
-def vocab(df:pd.DataFrame) -> set:
-    s = df.texto.str.cat(sep=' ').split()
-    vocabSet = set([palabra for palabra in s])
-    return vocabSet
+def reduc_vocab(df_tr:pd.DataFrame, df_ts:pd.DataFrame) -> tuple:
+    s = df_tr.texto.str.cat(sep=' ').split()
+    conteos = Counter(s)
+    train_vocabulario = set([palabra for palabra in s if conteos[palabra] > 1])
+    
+    s = df_ts.texto.str.cat(sep=' ').split()
+    conteos = Counter(s)
+    test_vocabulario = set([palabra for palabra in s if conteos[palabra] > 1])
+    
+    return train_vocabulario,test_vocabulario
 
-def new_dfs(autorVocab) -> tuple:
-    df_train_T = df_train.copy()
+def new_dfs(df_tr:pd.DataFrame, vc_tr:set, df_ts:pd.DataFrame, vc_ts:set) -> tuple:
+    df_train_T = df_tr.copy()
     df_train_T['nuevo_texto'] = df_train_T.texto.str.split().\
-        apply(lambda texto: [w for w in texto if w in autorVocab]).\
+        apply(lambda texto: [w for w in texto if w in vc_tr]).\
         apply(lambda x : ' '.join(x))
-    df_train_T['Conteos'] = df_train_T.nuevo_texto.str.split().apply(Counter)
+    df_train_T['Conteos']=df_train_T.nuevo_texto.str.split().apply(Counter)
     
-    df_test_T = df_test.copy()
-    df_test_T['nuevo_texto' ]= df_test_T.texto.str.split().\
-        apply(lambda texto: [w for w in texto if w in autorVocab]).\
+    df_test_T = df_ts.copy()
+    df_test_T['nuevo_texto']=df_test_T.texto.str.split().\
+        apply(lambda texto: [w for w in texto if w in vc_ts]).\
         apply(lambda x : ' '.join(x))
     df_test_T['Conteos'] = df_test_T.nuevo_texto.str.split().apply(Counter)
     
     return df_train_T, df_test_T
 
-# Corrección de Laplace en el caso general
-# Se corrige la misma tabla que se senvía como argumento; no se crea una nueva.
 def Laplace_gral(tabla):
     n = len(tabla[list(tabla.keys())[0]]) 
     for k in tabla.keys():
@@ -68,7 +69,84 @@ def Laplace_gral(tabla):
             pb = (registro[i] + 1)/(n_j+n)
             tabla[k][i]=pb
 
-def check(palabra, pares_ta, W, conteo_w):
+def test(autores: list) -> tuple:
+    df_train_T = new_df_train(autores)
+    train_vocabulario,test_vocabulario = reduc_vocab(df_train_T, df_test)
+    vocabulario = train_vocabulario.union(test_vocabulario)
+    df_train_T, df_test_T = new_dfs(df_train_T, train_vocabulario, df_test, test_vocabulario)
+    
+    # Creación de variables
+
+    # Vraible para autor
+    # Ocurrencias de cada autor y conteos de ocurrencias y de número de autores
+    oc_autor = Counter(df_train_T.autor)
+    tot_oc_aut = np.sum(list(oc_autor.values()))
+    A = mb.Var('A', set([autor for autor in oc_autor]))
+    # Distribución P(A)
+    n_= []
+    for autor in oc_autor:
+        n_.append(((autor,), oc_autor[autor] / tot_oc_aut))
+
+    # Dicionario de valores de probabilidad
+    dA = dict(n_)
+    # Distribución de probabilidad
+    PA = mb.Distrib(table = dA, columns=('A',))
+
+    # Variable para tipos
+    # Ocurrencias de cada tipo y conteos de ocurrencias y de número de tipos
+    oc_tipo = Counter(df_train_T.tipo)
+    tot_oc_tipo = np.sum(list(oc_tipo.values()))
+    tot_tipos = len(oc_tipo)
+    T = mb.Var('T', set([tipo for tipo in oc_tipo]))
+
+    # Distribución P(T|A)
+    # Ocurrencias (conteos) de cada combinación (tipo,autor)
+    conteo_pares = Counter(zip(df_train_T.autor,df_train_T.tipo))
+    # Combinaciones (tipo,autor)
+    autores = list(set(df_train_T.autor))
+    tipos = list(set(df_train_T.tipo))
+
+    dT_A = {}
+
+    for autor, tipo in product(*[autores,tipos]):
+        par = (autor, tipo)
+        ak = (autor,)
+        
+        if ak in dT_A.keys():
+            if par in conteo_pares.keys():
+                dT_A[ak][(tipo,)] = conteo_pares[par]
+            else:
+                dT_A[ak][(tipo,)] = 0 
+        else:
+            if par in conteo_pares.keys():
+                dT_A[ak] = {(tipo,): conteo_pares[par]}
+            else:
+                dT_A[ak] = {(tipo,): 0}
+                
+    # Corrección de Laplace en el caso general
+    # Se corrige la misma tabla que se senvía como argumento; no se crea una nueva.
+    Laplace_gral(dT_A)
+
+    PT_A = mb.CondDistrib(dT_A, (T.getName(),), (A.getName(),))
+    
+     # Palabras
+    W = {}
+    for w in vocabulario:    # vocabulario reducido
+        W[w] = mb.Var(w,set([0,1]))
+    
+    # Combinaciones (tipo,autor)
+    autores = list(set(df_train_T.autor))
+    tipos = list(set(df_train_T.tipo))
+    pares_ta = list(product(autores,tipos))
+    
+    # Conteos de palabras en nuevo_texto por pares (a,t) en el data frame de train
+    conteo_w = dict(df_train_T.Conteos)
+    pares_train = list(zip(df_train_T.autor,df_train_T.tipo))
+    
+    for j,k in enumerate(conteo_w.keys()):
+        conteo_w[k] = {pares_train[j] : dict(conteo_w[k])}
+        
+    def check(palabra,pares_ta):
         pw_ = {}
         var = W[palabra]
         
@@ -97,166 +175,48 @@ def check(palabra, pares_ta, W, conteo_w):
             pw_[par] = {(0,): pw_0, (1,): pw_1}
         pw_ = OrderedDict(sorted(pw_.items()))
         return pw_
-       
-def test(autores:list, nT:int):
-    df_train_T = df_autores(autores)
-    vocabTrain = vocab(df_train_T)
-    
-    df_train_T, df_test_T = new_dfs(vocabTrain)
-    vocabTest =  vocab(df_test_T)
-    
-    # Vraible para autor
-    # Ocurrencias de cada autor y conteos de ocurrencias y de número de autores
-    oc_autor = Counter(df_train_T.autor)
-    tot_oc_aut = np.sum(list(oc_autor.values()))
-    tot_autores = len(oc_autor)
-    A = mb.Var('A', set([autor for autor in oc_autor]))
-    
-    # Distribución P(A)
-    n_= []
-    for autor in oc_autor:
-        n_.append(((autor,),oc_autor[autor]/tot_oc_aut))
-    # Distribución de probabilidad
-    dA = dict(n_)
-    PA = mb.Distrib(table = dA, columns=('A',))
-    
-    # Variable para tipos
-    # Ocurrencias de cada tipo y conteos de ocurrencias y de número de tipos
-    oc_tipo = Counter(df_train_T.tipo)
-    tot_oc_tipo = np.sum(list(oc_tipo.values()))
-    tot_tipos = len(oc_tipo)
-    T = mb.Var('T', set([tipo for tipo in oc_tipo]))
-    
-    # Distribución P(T|A)
-    # Ocurrencias (conteos) de cada combinación (tipo,autor)
-    conteo_pares = Counter(zip(df_train_T.autor, df_train_T.tipo))
-    # Combinaciones (tipo,autor)
-    autores = list(set(df_train_T.autor))
-    tipos = list(set(df_train_T.tipo))
-
-    dT_A = {}
-
-    for autor, tipo in product(*[autores,tipos]):
-        par = (autor, tipo)
-        ak = (autor,)
-        
-        if ak in dT_A.keys():
-            if par in conteo_pares.keys():
-                dT_A[ak][(tipo,)] = conteo_pares[par]
-            else:
-                dT_A[ak][(tipo,)] = 0 
-        else:
-            if par in conteo_pares.keys():
-                dT_A[ak] = {(tipo,): conteo_pares[par]}
-            else:
-                dT_A[ak] = {(tipo,): 0}
-    
-    Laplace_gral(dT_A)
-    
-    PT_A = mb.CondDistrib(dT_A, (T.getName(),), (A.getName(),))
-    
-    vocabInter = vocabTest & vocabTrain
-    vocabDif = vocabTrain - vocabTest 
-
-    nuevoVocab = vocabInter.copy()
-    r = len(nuevoVocab)
-    qn = []
-    xn = []
-    
-    for i in range(nT):
-        df_train_T['nuevo_texto'] = df_train_T.texto.str.split().\
-            apply(lambda texto: [w for w in texto if w in nuevoVocab]).\
-            apply(lambda x : ' '.join(x))
-        df_train_T['Conteos']=df_train_T.nuevo_texto.str.split().apply(Counter)
-
-        # Palabras
-        W = {}
-        for w in nuevoVocab:    # vocabulario reducido
-            W[w] = mb.Var(w,set([0,1]))
-
-        # Combinaciones (tipo,autor)
-        autores = list(set(df_train_T.autor))
-        tipos = list(set(df_train_T.tipo))
-        pares_ta = list(product(autores,tipos))
-        
-        # Conteos de palabras en nuevo_texto por pares (a,t) en el data frame de train
-        conteo_w = dict(df_train_T.Conteos)
-        pares_train = list(zip(df_train_T.autor,df_train_T.tipo))
-        
-        PW_AT = {}
-        for w in nuevoVocab:    # vocabulario reducido
-            t = check(w,pares_ta,W,conteo_w)
-            PW_AT[w] = mb.CondDistrib(dict(t), (W[w].getName(),), (A.getName(), T.getName()))
             
-        vars_set = set([A,T] + [W[w] for w in W]) 
-        descomp_set = set([PA, PT_A] + [PW_AT[w] for w in W])
-        PATW = mb.Specification(vars_set, descomp_set)
         
-        Q_PATW = mb.Question(PATW)
-    
-        values_wi = []
-        Wl = [W[w] for w in W]
-        for w in Wl:
-            if w in vocabInter:
-                values_wi.append(1)
-            else:
-                values_wi.append(0)
-                
-        q = Q_PATW.Query(vars=tuple([A]), indep=tuple(Wl), indep_values=values_wi)
-        print("i_{}: n-r = {}".format(i, len(nuevoVocab) - r))
-        qn.append(q)
-        xn.append(len(nuevoVocab))  
+    PW_AT = {}
+    for w in W:    
+        t = check(w,pares_ta)
+        PW_AT[w] = mb.CondDistrib(dict(t), (W[w].getName(),), (A.getName(), T.getName()))
         
-        if len(vocabDif) > 0:
-            nuevoVocab.add(vocabDif.pop())
-        else: 
-            return xn, qn
+    vars_set = set([A,T] + [W[w] for w in W]) 
+    descomp_set = set([PA, PT_A] + [PW_AT[w] for w in W])
+    PATW = mb.Specification(vars_set, descomp_set)
+    Q_PATW = mb.Question(PATW)
     
-    return xn, qn
-
-def save(xn, qn, psn, jsonName:str):
-    print(jsonName)
-    data = {
-        'xn': xn,
-        'qn': qn,
-        'psn': psn
-    }
+    dcont = df_test_T.loc[df_test['titulo'] == 'el caballo y el lobo', 'Conteos'].iloc[0]
+    vocab_test = set(dcont)
     
-    with open(jsonName+'.json', 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-def presicion(qn) -> list:
-    psn = []
-    e_ps_n = 0
-    for i in range(len(qn)):
-        if qn[i][1][0] == 'jean de la fontaine':
-            e_ps_n += 1 
-            psn.append(e_ps_n / (i + 1))
+    wit = []
+    for w in W:
+        if w in vocab_test:
+            wit.append(1)
         else:
-            psn.append(e_ps_n / (i + 1))
+            wit.append(0)
     
-    return psn
+    qn = Q_PATW.Query(vars=(A,), indep=tuple([W[w] for w in W]), indep_values=tuple(wit))       
+    
+    for autor in set(df_train_T.autor):
+        conteos_autor = df_train_T[df_train_T['autor'] == autor].Conteos
+        vocab_autor = set()
+        for ca in conteos_autor:
+            vocab_autor = vocab_autor.union(set(ca))
+        print(f"Autor: {autor} \n\tVocabulario: {len(vocab_autor)} \n\tInterseccion: {len(vocab_test & vocab_autor)}\n\t p: {Q_PATW.Query(vars=(A,), indep=tuple([W[w] for w in W]), vars_values=(autor,),indep_values=tuple(wit))}")
+    
+    return qn
     
 def tests():
-    autoresS = set(df_train.autor)
-    autoresS.remove('jean de la fontaine')
-
-    autor1 = autoresS.pop()
-    autor2 = autoresS.pop()
-    testAutores = [
-        ['jean de la fontaine'], 
-        ['jean de la fontaine', autor1],
-        ['jean de la fontaine', autor1, autor2]
+    lista_autores = [
+        ['jean de la fontaine','carlos fuentes'], 
+        ['jean de la fontaine','alfonso reyes','esopo'],
+        ['jean de la fontaine','alfonso reyes','esopo','carlos fuentes'],
+        ['jean de la fontaine','alfonso reyes','esopo','carlos fuentes', 'gibrán jalil gibrán']
     ]
-
-    i = 1
-    for autores in testAutores:
-        xn, qn = test(autores, 20)
-        print(qn[0])
-        psn = presicion(qn)
-        save(xn, qn, psn, 'test_'+str(i))
-        i += 1
-
+    
+    for autores in lista_autores:  
+        print(f"{test(autores)}\n")
 
 tests()
-    

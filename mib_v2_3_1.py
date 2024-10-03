@@ -389,7 +389,7 @@ class Mib:
                 p = p_vi
                 value_vars = vv
             else: 
-                if p_vi / p > 1:
+                if p_vi > p:
                     p = p_vi
                     value_vars = vv
                                
