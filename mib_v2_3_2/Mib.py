@@ -1,91 +1,15 @@
 #==============================================================================
-#title          : mib_v2_3_2.py
+#title          : Mib.py
 #description    : Motor de inferencia bayesiano para variables discretas.
 #version        : 2.3.2
 #python_version : 3.10.12
 #==============================================================================
 from itertools import product
-from random import random
+import random
+from Var import Var
+from Distrib import Distrib
+from Specification import Specification
 
-class Var:
-    """Clase para el manejo de las variables (establecer y manejar los eventos).
-    Atributos:
-        name (any): Nombre de la varibale.
-        values (set): Conjunto, de enteros, que contiene los valores que representan un evento.
-        event (any): Valor que representa un evento.   
-        
-    Var(any,set) -> Nuevo objeto Var.
-    """
-    def __init__(self, name, values:set) -> None:
-        self.name = name
-        self.values = values
-        self.event = None
-    
-    def getValues(self) -> list:
-        """ Método obtner los valores de la variable para calcular la marginal.
-
-        Return:
-            list: lista con los valores de la variable.
-        """  
-        if self.event:
-            return [self.event]
-        else:
-            return list(self.values)
-            
-class Distrib:
-    """ Clase para el manejo de distibuciones marginales.
-    Atributos:
-        table (dict): Dicciónario de las probabilidades (tuple: float).
-        vars (tuple): Tupla con el orden de las variables del diccionario.
-        parents (tuple (optional)): Tupla con el orden de las variables padres del diccionario.
-        
-    Distrib(tuple,tuple,dict) -> nuevo objeto Distrib
-    
-    Distrib(tuple,dict) -> nuevo objeto Distrib
-    """
-
-    def __init__(self, table:dict, vars:tuple, parents:tuple = None) -> None:
-        self.table = table
-        self.vars = vars
-        self.parents = parents
-    
-    def P(self) -> float:
-        if not self.parents:
-            return self._jointP()
-        else:
-            return self._condP()
-    
-    def _jointP(self) -> float:
-        key = [v.name for v in self.vars]
-        return self.table[tuple(key)]
-    
-    def _condP(self) -> float:
-        vars_key = [v.name for v in self.vars]
-        indep_key = [v.name for v in self.parents]
-        return self.table[tuple(indep_key)][tuple(vars_key)]
-    
-class Specification:
-    """ Clase el manejo de la especificación de un pragrama Bayesiano.
-        
-        Atributos:
-            vars (set): Conjunto de variables de la distribución conjunta.
-            descomp (set): Conjunto de las distribuciones que generan el modelo. 
-            
-        Specification(set,tuple) -> nuevo objeto Distrib
-    """
-    
-    def __init__(self, vars:set, descomp:tuple) -> None:
-        self.vars = vars
-        self.descomp = descomp
-        
-    def getValues(self, hidden_vars:tuple) -> list:
-        """ Método para obtener una lista de los valores de las variables.
-
-        Returns:
-            list: Lista de los valores de cada variable.
-        """
-        return [var.getValues() for var in hidden_vars]
-    
 class Mib:
     """ Clase para el motor de inferencia bayesiana.
 
@@ -125,20 +49,33 @@ class Mib:
         self.__resetVars()
         return sum
     
-
-                
-    
-    def aproximation(self, vars:tuple, N:int) -> float:
+    def aproximation(self, vars:tuple, event:tuple, N:int) -> float:
+        iteration = 0
         count = 0
-        population = {}
-        
-        while count < N:
+        while iteration < N:
+            vs = set(vars)
+            for d in self.ds.descomp:
+                d.setSample()
+                
+                vi = set(d.vars)
+                if d.parents:
+                     vi = vi.union(set(d.parents))
+                
+                vs = vs - vi
+                
+                if len(vs) == 0:
+                    indv = []
+                    for v in vars:
+                        indv.append(v.event)
+                        v.reset()
+                    
+                    if tuple(indv) == event:
+                        count += 1
+                    
+            iteration += 1
             
-            
-            count += 1
+        return count / N
     
-        
-
     def marginal(self, vars:tuple, values:tuple) -> float:
         """ Método para hacer la consulta de una marginal.
 
@@ -318,64 +255,3 @@ class Mib:
                 indep_value = obs
                 
         return indep_column, indep_value, p / self.marginal(indep_column, indep_value)
-    
-class Question:
-    """ Clase para generar preguntas y generar consultas para responder.
-
-        Atributos:
-            sp (Specification): Espesificación del problema con su distribución conjunta y su descomposción.
-    """
-
-    def __init__(self, description: Specification) -> None:
-        self.ds = description
-    
-    def _DQ(self, mib:Mib, vars:set, indep:set = None):
-        if not indep:
-            return mib.Distrib_inference(vars)
-        else:
-            return mib.Distrib_inference(vars, indep)
-        
-    def DistributionQuery(self, vars:set, indep:set = None):
-        """ Método para generar una consulta que generar una distribución.
-
-        Args:
-            vars (set): Conjunto de variables.
-            indep (set (optional)): Conjunto de variables independientes. Defaults to None.
-
-        Returns:
-            Distrib | CondDistrib: Distribución consultada.
-        """
-        mib = Mib(self.ds)
-        return self._DQ(mib, vars, indep)
-    
-    def _Q(self, mib:Mib, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
-        if not indep:
-            if vars_values:
-                return mib.marginal(vars, vars_values)
-            else:
-                return mib.marginal_inference(vars)
-        else:
-            if vars_values and indep_values:
-                return mib.cond(vars, vars_values, indep, indep_values)
-            elif vars_values and not indep_values:
-                return mib.obs_inference(vars, vars_values, indep)
-            elif not vars_values and indep_values:
-                return mib.hyps_inference(vars, indep, indep_values)
-            
-        print("Consulta no valida")
-    
-    def Query(self, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
-        """ Método para generar una consulta sobre los valores más probables o consulta de probabilidades.
-        
-        Args:
-            vars (tuple): Tupla de variables (vars).
-            indep (tuple, optional): Tupla de variables independientes. Defaults to None.
-            vars_values (tuple, optional): Tupla para los valores de las variables (vars). Defaults to None.
-            indep_values (tuple, optional): Tupla para los valores de las variables independientes. Defaults to None.
-
-        Returns:
-            tuple : Tupla con los datos de la consulta.
-        """
-        mib = Mib(self.ds)
-        return self._Q(mib, vars, indep, vars_values, indep_values)
-    
