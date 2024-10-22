@@ -1,6 +1,6 @@
 import random
 from itertools import product
-from Var import Var
+from mib_v2_3_2.var import Var
 
 class Distrib:
     """ Clase para el manejo de distibuciones marginales.
@@ -26,12 +26,12 @@ class Distrib:
             return self._condP()
     
     def _jointP(self) -> float:
-        key = [v.name for v in self.vars]
+        key = [v.event for v in self.vars]
         return self.table[tuple(key)]
     
     def _condP(self) -> float:
-        vars_key = [v.name for v in self.vars]
-        indep_key = [v.name for v in self.parents]
+        vars_key = [v.event for v in self.vars]
+        indep_key = [v.event for v in self.parents]
         return self.table[tuple(indep_key)][tuple(vars_key)]
     
     def setSample(self) -> None:
@@ -39,9 +39,8 @@ class Distrib:
             indep_key = tuple([v.event for v in self.parents])
             values = list(product(*[v.values for v in self.vars]))
             probabilitys = []
-            for key in values:
+            for key in product(*[v.values for v in self.vars]):
                 probabilitys.append(self.table[indep_key][key])
-            
             
             value = random.choices(values, probabilitys, k=1)[0]
         else:
@@ -54,5 +53,4 @@ class Distrib:
             
         for i,v in enumerate(self.vars):
                 v.event = value[i]
-        
 

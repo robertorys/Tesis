@@ -1,5 +1,5 @@
-from Specification import Specification
-from Mib import Mib
+from mib_v2_3_2.specification import Specification
+from mib_v2_3_2.mib import Mib
 
 class Question:
     """ Clase para generar preguntas y generar consultas para responder.

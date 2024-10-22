@@ -5,10 +5,9 @@
 #python_version : 3.10.12
 #==============================================================================
 from itertools import product
-import random
-from Var import Var
-from Distrib import Distrib
-from Specification import Specification
+from mib_v2_3_2.var import Var
+from mib_v2_3_2.distrib import Distrib
+from mib_v2_3_2.specification import Specification
 
 class Mib:
     """ Clase para el motor de inferencia bayesiana.
@@ -32,7 +31,7 @@ class Mib:
         """
         hidden_vars = tuple(hidden_vars)
         sum = 0
-        for key in product(self.ds.getValues(hidden_vars)):
+        for key in product(*self.ds.getValues(hidden_vars)):
             # Establecer los valores de los eventos.
             i = 0
             for v in hidden_vars:
@@ -49,28 +48,27 @@ class Mib:
         self.__resetVars()
         return sum
     
-    def aproximation(self, vars:tuple, event:tuple, N:int) -> float:
+    def aproximation(self, vars:tuple, event:tuple, N:int = 50000) -> float:
         iteration = 0
         count = 0
         while iteration < N:
             vs = set(vars)
-            for d in self.ds.descomp:
-                d.setSample()
+            i = 0
+            while len(vs) > 0:
+                self.ds.descomp[i].setSample()
                 
-                vi = set(d.vars)
-                if d.parents:
-                     vi = vi.union(set(d.parents))
+                vi = set(self.ds.descomp[i].vars)
+                if self.ds.descomp[i].parents:
+                    vi = vi.union(set(self.ds.descomp[i].parents))
+                vs = vs.difference(vi)
+                i += 1
                 
-                vs = vs - vi
-                
-                if len(vs) == 0:
-                    indv = []
-                    for v in vars:
-                        indv.append(v.event)
-                        v.reset()
-                    
-                    if tuple(indv) == event:
-                        count += 1
+            indv = []
+            for v in vars:
+                indv.append(v.event)
+                v.reset()      
+            if tuple(indv) == event:
+                count += 1
                     
             iteration += 1
             
@@ -153,8 +151,8 @@ class Mib:
         
         if not indep:
             for event in product(*vars_values):
-                table[event] = self.marginal(vars_column, event)
-            
+                # table[event] = self.marginal(vars_column, event)
+                table[event] = self.aproximation(vars_column, event)
             return Distrib(table, vars_column)  
         else:
             indep_column = tuple(indep)
@@ -188,7 +186,6 @@ class Mib:
                 value = event
         
         return vars, value, p
-    
     
     def hyps_inference(self, vars:tuple, indep:tuple, indep_values:tuple) -> tuple:
         """ Método para inferir el valor más probable de una hipótesis de una distribución condicional
