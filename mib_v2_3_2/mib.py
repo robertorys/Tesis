@@ -162,7 +162,7 @@ class Mib:
                 for ev in product(*vars_values):
                     table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
                     
-            return Distrib(table, vars_column, indep_values)
+            return Distrib(table, vars_column, indep_column)
             
     def marginal_inference(self, vars:tuple) -> tuple:
         """ Método para inferir el valor más probable de una distribución marginal o conjunta.
