@@ -91,27 +91,6 @@ class Mib:
         
         return self.probability(self.ds.vars - set(vars1).union(set(vars2)))
     
-    def cond(self, vars:tuple, vars_values:tuple, indep_vars:tuple, indep_values:tuple) -> float:
-        """ Método para hacer la consulta de una distribución conjunta.
-
-        Args:
-            vars (tuple): Tupla de las variables de vars.
-            vars_values (tuple): Tupla de los valores para las variables de vars.
-            indep_vars (tuple): Tupla de los nombres de las variables de indep.
-            indep_values (tuple): Tupla de los valores para las variables de indep.
-            
-        Returns:
-            float: Valor de la probabilidad de la marginal.
-        """
-        
-        # Calcular el numerados
-        num = self.joint_marginal(vars, vars_values, indep_vars, indep_values)
-        
-        # Calcular el denominador
-        den = self.marginal(indep_vars, indep_values)
-        
-        return num / den
-    
     def distrib_inference(self, vars:set, indep:set = None) -> Distrib:
         """ Método para hacer la consulta de una distribución de la conjunta de vars.
 
@@ -135,9 +114,10 @@ class Mib:
             indep_values = [v.values for v in indep]
             for ei in product(*indep_values):
                 table[ei] = {}
+                num = self.marginal(indep_column, ei)
                 for ev in product(*vars_values):
                     # table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
-                    table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
+                    table[ei][ev] = self.joint_marginal(vars_column, ev, indep_column, ei) / num
                     
             return Distrib(table, vars_column, indep_column)
             
@@ -304,3 +284,30 @@ class MibAp(Mib):
             iteration += 1
             
         return count / N_cond
+
+    def distrib_inference(self, vars:set, indep:set = None) -> Distrib:
+        """ Método para hacer la consulta de una distribución de la conjunta de vars.
+
+        Args:
+            vars (set): Conjunto de variables para la distribución.
+            indep (set (optional)): Conjunto de variables para la condicional.
+        Returns:
+            Distrib: Dsitribución marginal calculada.
+        """
+        table = {}
+        vars_column = tuple(vars)
+        vars_values = [v.values for v in vars]
+        
+        if not indep:
+            for event in product(*vars_values):
+                table[event] = self.marginal(vars_column, event)
+            return Distrib(table, vars_column)  
+        else:
+            indep_column = tuple(indep)
+            indep_values = [v.values for v in indep]
+            for ei in product(*indep_values):
+                table[ei] = {}
+                for ev in product(*vars_values):
+                    table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
+                    
+            return Distrib(table, vars_column, indep_column)
