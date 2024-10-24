@@ -6,27 +6,33 @@
 #include <set>
 #include <optional>
 
+using namespace std;
+
 class Var {
 private:
-    std::string name;        // Nombre de la variable
-    std::set<int> values;    // Conjunto de valores que representan un evento
-    std::optional<int> event; // Evento actual (usamos std::optional para manejar el "None" de Python)
+    string name;        // Nombre de la variable
+    set<int> values;    // Conjunto de valores que representan un evento
+    optional<int> event; // Evento actual (usamos optional para manejar el "None" de Python)
 
 public:
     // Constructor
-    Var(const std::string& name, const std::set<int>& values);
+    Var(const string& name, const set<int>& values)
+        : name(name), values(values), event(nullopt) {}
 
     // Método para obtener los valores de la variable
-    std::vector<int> getValues() const;
+    vector<int> getValues() const;
 
     // Método para resetear el evento
     void reset();
 
-    // Método opcional si se quiere establecer el evento manualmente
+    // Método para establecer el evento
     void setEvent(int newEvent);
 
+    // Método para obtener el valor del evento
+    int getEvent();
+
     // Método para obtener el nombre de la variable (opcional)
-    std::string getName() const;
+    string getName() const;
 };
 
 #endif
