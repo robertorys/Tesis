@@ -7,6 +7,7 @@
 from itertools import product
 import multiprocessing as mp
 import copy
+import math
 from mib_v2_3_2.var import Var
 from mib_v2_3_2.distrib import Distrib
 from mib_v2_3_2.specification import Specification
@@ -25,14 +26,26 @@ class Mib:
         for v in self.ds.vars:
             v.event = None
     
-    def probability(self, hidden_vars:set) -> float:
+    def probability(self, knwon:set, hidden_vars:set) -> float:
         """ Método para hacer el calculo de la marginal.
             
         Returns:
             float: Valor de la probabilidad de la marginal.
         """
-        hidden_vars = tuple(hidden_vars)
+        descompK = set()
+        
+        for d in self.ds.descomp:
+            if d.check(knwon):
+                descompK.add(d)
+        
         sum = 0
+        p = 1
+        if len(descompK) > 0:
+            for d in descompK:
+                p *= d.P()
+            
+        descomp = set(self.ds.descomp) - descompK
+        
         for key in product(*self.ds.getValues(hidden_vars)):
             # Establecer los valores de los eventos.
             i = 0
@@ -41,14 +54,14 @@ class Mib:
                 i += 1
         
             # Calcular la probabilidad con los valores de k.
-            p = 1
-            for d in self.ds.descomp:
-                p *= d.P()
+            p_i = 1
+            for d in descomp:
+                p_i *= d.P()
             
-            sum += p
+            sum += p_i
     
         self.__resetVars()
-        return sum
+        return p * sum
  
     def marginal(self, vars:tuple, values:tuple) -> float:
         """ Método para hacer la consulta de una marginal.
@@ -64,8 +77,9 @@ class Mib:
         for var in vars:
             var.event = values[i]
             i += 1
-        
-        return self.probability(self.ds.vars - set(vars))
+        knwon = set(vars)
+        hidden = self.ds.vars - knwon
+        return self.probability(knwon, hidden)
     
     def joint_marginal(self, vars1:tuple, values1:tuple, vars2:tuple, values2:tuple) -> float:
         """ Método para calcular la marginal sobre dos cunjontos de variables.
@@ -88,8 +102,15 @@ class Mib:
         for var in vars2:
             var.event = values2[i]
             i += 1
-        
-        return self.probability(self.ds.vars - set(vars1).union(set(vars2)))
+            
+        knwon = set(vars1).union(vars2)
+        hidden = self.ds.vars - knwon
+        return self.probability(knwon, hidden)
+    
+    def cond(self, vars:tuple, values:tuple, indep:tuple, indep_values:tuple) -> float:
+        p_var_indep = self.joint_marginal(vars, values, indep, indep_values)
+        p_indep = self.marginal(indep, indep_values)
+        return p_var_indep / p_indep
     
     def distrib_inference(self, vars:set, indep:set = None) -> Distrib:
         """ Método para hacer la consulta de una distribución de la conjunta de vars.
@@ -106,7 +127,6 @@ class Mib:
         
         if not indep:
             for event in product(*vars_values):
-                # table[event] = self.marginal(vars_column, event)
                 table[event] = self.marginal(vars_column, event)
             return Distrib(table, vars_column)  
         else:
@@ -116,7 +136,6 @@ class Mib:
                 table[ei] = {}
                 num = self.marginal(indep_column, ei)
                 for ev in product(*vars_values):
-                    # table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
                     table[ei][ev] = self.joint_marginal(vars_column, ev, indep_column, ei) / num
                     
             return Distrib(table, vars_column, indep_column)
@@ -154,11 +173,10 @@ class Mib:
             indep (tuple): Tupla de las variables independientes de la distribución condicional.
             indep_values (tuple): Tupla con los valores de las variables de indep de la distribución.
         Returns:
-            tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
-            el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
+            tuple ((tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
+            y el último elemento es la probabilidad.
         """
         vars_column = tuple([v.name for v in vars])
-        indep_column = tuple([v.name for v in indep])
         
         vars_values = [v.values for v in vars]
         
@@ -175,8 +193,12 @@ class Mib:
             else: 
                 p = p_hyp
                 value_vars = hyp
+                
+        den = self.marginal(indep, indep_values)
+        if den == 0:
+            return vars_column, value_vars, p
                                
-        return vars_column, value_vars, p / self.marginal(indep, indep_values)
+        return vars_column, value_vars, p / den
     
     def obs_inference(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
         """ Método para inferir el valor más probable de una obersvación de una distribución condicional
@@ -187,11 +209,10 @@ class Mib:
             vars_values (tuple): Tupla con los valores de las variables de la distribución.
             indep (tuple): Tupla de las variables independientes de la distribución condicional.
         Returns:
-            tuple ((tuple, tuple, tuple, tuple, float)): El primer elemento es la tupla de nombres de vars, el segundo elemento es la tupla que representa sus valores, 
-            el tercer elemento es la tupla de nombres de indep, el cuarto elemento tupla representa sus valores y el último elemento es la probabilidad.
+            tuple ((tuple, tuple, float)): El primer elemento es la tupla de nombres de indep, el segundo elemento es la tupla que representa sus valores, 
+            y el último elemento es la probabilidad.
         """
         
-        vars_column = tuple([v.name for v in vars])
         indep_column = tuple([v.name for v in indep])
         
         indep_values = [v.values for v in indep]
@@ -211,80 +232,88 @@ class Mib:
                 
         return indep_column, indep_value, p / self.marginal(indep, indep_value)
 
-
 class MibAp(Mib):
     """ Clase para el motor de inferencia bayesiana usando aproximación.
 
         Atributos:
             model (Model): Modelo del problema con su distribución conjunta y su descomposción.
     """
-    def __init__(self, model: Specification) -> None:
+    def __init__(self, model: Specification, N:int) -> None:
         super().__init__(model)
+        self.N = N
     
-    def marginal(self, vars:tuple, values:tuple, N:int = 10000) -> float:
+    def marginal(self, vars:tuple, values:tuple) -> float:
         iteration = 0
-        count = 0
+        count_p = 0
         vars_set = set(vars)
-        while iteration < N:
-            vs = vars_set
+        
+        while iteration < self.N:
+            vs = vars_set.copy()
             i = 0
+            
             while len(vs) > 0:
                 self.ds.descomp[i].setSample()
                 
-                vi = set(self.ds.descomp[i].vars)
-                if self.ds.descomp[i].parents:
-                    vi = vi.union(set(self.ds.descomp[i].parents))
-                vs = vs.difference(vi)
-                i += 1
-                
-            indv = []
-            for v in vars:
-                indv.append(v.event)
-                v.reset()      
-            if tuple(indv) == values:
-                count += 1
-                    
-            iteration += 1
-            
-        return count / N
-    
-    def cond(self, vars:tuple, vars_values:tuple, indep_vars:tuple, indep_values:tuple, N:int = 10000) -> float:
-        iteration = 0
-        count = 0
-        N_cond = 0
-        vars_set = set(vars)
-        indep_set = set(indep_vars)
-        while iteration < N:
-            vs = vars_set.union(indep_set)
-            i = 0
-            while len(vs) > 0:
-                self.ds.descomp[i].setSample()
-                
-                vi = set(self.ds.descomp[i].vars)
-                if self.ds.descomp[i].parents:
-                    vi = vi.union(set(self.ds.descomp[i].parents))
-                vs = vs.difference(vi)
+                vs = vs - self.ds.descomp[i].getVars()
                 i += 1
             
-            indv_indep = []
-            for v in indep_vars:
-                indv_indep.append(v.event)
-                v.reset() 
-                
             indv = []
             for v in vars:
                 indv.append(v.event)
                 v.reset()  
-                
-            if tuple(indv_indep) == indep_values:
-                N_cond += 1
-                if tuple(indv) == vars_values:
-                    count += 1
                     
+            if tuple(indv) == values:
+                count_p += 1
+            
             iteration += 1
             
-        return count / N_cond
+        return count_p / self.N
+    
+    def cond(self, vars:tuple, vars_v:tuple, indep_vars:tuple, indep_v:tuple) -> float:
+        iteration = 0
+        count = 0
+        count_N = 0
+        vars_set = set(vars)
+        
+        while iteration < self.N:
+            vs = vars_set.copy()
+            i = 0
+            
+            while len(vs) > 0:
+                self.ds.descomp[i].setSample()
+                
+                vs = vs - self.ds.descomp[i].getVars()
+                i += 1
+                
+            indv_indep = []
+            for v in indep_vars:
+                indv_indep.append(v.event)
+                v.reset()
+                
+            if tuple(indv_indep) == indep_v:
+                count_N += 1
+                
+                indv = []
+                
+                for v in vars:
+                    indv.append(v.event)
+                    v.reset()      
+                if tuple(indv) == vars_v:
+                    count += 1
+                
+            iteration += 1
+        
+        if count_N == 0: 
+            return 0
+        
+        return count / count_N
 
+    def joint_marginal(self, vars1, values1, vars2, values2):
+        vars = tuple(list(vars1) + list(vars2))
+        values = tuple(list(values1) + list(values2))
+            
+        return self.marginal(vars, values)
+    
     def distrib_inference(self, vars:set, indep:set = None) -> Distrib:
         """ Método para hacer la consulta de una distribución de la conjunta de vars.
 
@@ -311,3 +340,4 @@ class MibAp(Mib):
                     table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
                     
             return Distrib(table, vars_column, indep_column)
+        

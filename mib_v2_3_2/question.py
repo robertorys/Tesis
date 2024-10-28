@@ -18,7 +18,7 @@ class Question:
         else:
             return mib.distrib_inference(vars, indep)
         
-    def DistributionQuery(self, vars:set, indep:set = None, aproximation = False):
+    def DistributionQuery(self, vars:set, indep:set = None, aproximation = False, N=10000):
         """ Método para generar una consulta que generar una distribución.
 
         Args:
@@ -32,7 +32,7 @@ class Question:
             mib = Mib(self.ds)
             return self._DQ(mib, vars, indep)
         else:
-            mib = MibAp(self.ds)
+            mib = MibAp(self.ds, N)
             return self._DQ(mib, vars, indep)
     
     def _Q(self, mib:Mib | MibAp, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
@@ -51,7 +51,7 @@ class Question:
             
         print("Consulta no valida")
     
-    def Query(self, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None, aproximation = False):
+    def Query(self, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None, aproximation = False, N=10000):
         """ Método para generar una consulta sobre los valores más probables o consulta de probabilidades.
         
         Args:
@@ -67,6 +67,6 @@ class Question:
             mib = Mib(self.ds)
             return self._Q(mib, vars, indep, vars_values, indep_values)
         else:
-            mib = MibAp(self.ds)
+            mib = MibAp(self.ds, N)
             return self._Q(mib, vars, indep, vars_values, indep_values)
     

@@ -34,6 +34,22 @@ class Distrib:
         indep_key = [v.event for v in self.parents]
         return self.table[tuple(indep_key)][tuple(vars_key)]
     
+    def check(self, knwon:set) -> bool:
+        vars = set(self.vars)
+        if self.parents:
+            vars = vars.union(set(self.parents))
+        
+        if len(vars.difference(knwon)) == 0:
+            return True
+        
+        return False
+    
+    def getVars(self) -> set:
+        vars = set(self.vars)
+        if self.parents:
+            vars = vars.union(set(self.parents))
+        return vars
+    
     def setSample(self) -> None:
         if self.parents:
             indep_key = tuple([v.event for v in self.parents])
