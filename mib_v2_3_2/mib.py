@@ -22,7 +22,7 @@ class Mib:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def __resetVars(self) -> None:
+    def resetVars(self) -> None:
         for v in self.ds.vars:
             v.event = None
     
@@ -60,7 +60,7 @@ class Mib:
             
             sum += p_i
     
-        self.__resetVars()
+        self.resetVars()
         return p * sum
  
     def marginal(self, vars:tuple, values:tuple) -> float:
@@ -259,12 +259,12 @@ class MibAp(Mib):
             
             indv = []
             for v in vars:
-                indv.append(v.event)
-                v.reset()  
+                indv.append(v.event) 
                     
             if tuple(indv) == values:
                 count_p += 1
             
+            self.resetVars()
             iteration += 1
             
         return count_p / self.N
@@ -288,7 +288,6 @@ class MibAp(Mib):
             indv_indep = []
             for v in indep_vars:
                 indv_indep.append(v.event)
-                v.reset()
                 
             if tuple(indv_indep) == indep_v:
                 count_N += 1
@@ -297,10 +296,11 @@ class MibAp(Mib):
                 
                 for v in vars:
                     indv.append(v.event)
-                    v.reset()      
+                        
                 if tuple(indv) == vars_v:
                     count += 1
-                
+            
+            self.resetVars()
             iteration += 1
         
         if count_N == 0: 
