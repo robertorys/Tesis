@@ -14,7 +14,21 @@
               "type": "pdf",
               "state": {
                 "file": "Libros/AIMA-4th-edition.pdf"
-              }
+              },
+              "icon": "lucide-file-text",
+              "title": "AIMA-4th-edition"
+            }
+          },
+          {
+            "id": "6f85726e18566466",
+            "type": "leaf",
+            "state": {
+              "type": "pdf",
+              "state": {
+                "file": "Libros/Bayesian-Programming.pdf"
+              },
+              "icon": "lucide-file-text",
+              "title": "Bayesian-Programming"
             }
           },
           {
@@ -26,7 +40,9 @@
                 "file": "tesis/capitulo 1/Antecedentes II.md",
                 "mode": "source",
                 "source": false
-              }
+              },
+              "icon": "lucide-file",
+              "title": "Antecedentes II"
             }
           },
           {
@@ -38,7 +54,9 @@
                 "file": "NotasLibros/Bayesian programming.md",
                 "mode": "source",
                 "source": false
-              }
+              },
+              "icon": "lucide-file",
+              "title": "Bayesian programming"
             }
           },
           {
@@ -48,7 +66,9 @@
               "type": "pdf",
               "state": {
                 "file": "Libros/Jaynes_book.pdf"
-              }
+              },
+              "icon": "lucide-file-text",
+              "title": "Jaynes_book"
             }
           },
           {
@@ -58,10 +78,13 @@
               "type": "pdf",
               "state": {
                 "file": "Libros/Jaynes_book.pdf"
-              }
+              },
+              "icon": "lucide-file-text",
+              "title": "Jaynes_book"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -81,7 +104,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical"
-              }
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
             }
           },
           {
@@ -96,7 +121,9 @@
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical"
-              }
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
             }
           },
           {
@@ -104,7 +131,9 @@
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {}
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
             }
           }
         ]
@@ -127,7 +156,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Libros/AIMA-4th-edition.pdf",
+                "file": "Libros/Bayesian-Programming.pdf",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -135,7 +164,9 @@
                 "searchQuery": "",
                 "backlinkCollapsed": false,
                 "unlinkedCollapsed": true
-              }
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes de Bayesian-Programming"
             }
           },
           {
@@ -144,10 +175,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Libros/AIMA-4th-edition.pdf",
+                "file": "Libros/Bayesian-Programming.pdf",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
-              }
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes de Bayesian-Programming"
             }
           },
           {
@@ -158,7 +191,9 @@
               "state": {
                 "sortOrder": "frequency",
                 "useHierarchy": true
-              }
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
             }
           },
           {
@@ -167,8 +202,10 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Libros/AIMA-4th-edition.pdf"
-              }
+                "file": "Libros/Bayesian-Programming.pdf"
+              },
+              "icon": "lucide-list",
+              "title": "Esquema de Bayesian-Programming"
             }
           }
         ]
@@ -180,15 +217,15 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false
     }
   },
-  "active": "d6b51902e1a14d2a",
+  "active": "6f85726e18566466",
   "lastOpenFiles": [
     "NotasLibros/Bayesian programming.md",
     "Libros/Jaynes_book.pdf",

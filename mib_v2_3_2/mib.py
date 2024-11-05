@@ -22,10 +22,6 @@ class Mib:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def resetVars(self) -> None:
-        for v in self.ds.vars:
-            v.event = None
-    
     def probability(self, knwon:set, hidden_vars:set) -> float:
         """ Método para hacer el calculo de la marginal.
             
@@ -60,7 +56,7 @@ class Mib:
             
             sum += p_i
     
-        self.resetVars()
+        self.ds.resetVars()
         return p * sum
  
     def marginal(self, vars:tuple, values:tuple) -> float:
@@ -236,13 +232,13 @@ class MibAp(Mib):
     """ Clase para el motor de inferencia bayesiana usando aproximación.
 
         Atributos:
-            model (Model): Modelo del problema con su distribución conjunta y su descomposción.
+            ds (Specification): Modelo del problema con su distribución conjunta y su descomposción.
     """
-    def __init__(self, model: Specification, N:int) -> None:
-        super().__init__(model)
+    def __init__(self, ds: Specification, N:int) -> None:
+        super().__init__(ds)
         self.N = N
     
-    def marginal(self, vars:tuple, values:tuple) -> float:
+    def sample_marginal(self, vars:tuple, values:tuple) -> int:
         iteration = 0
         count_p = 0
         vars_set = set(vars)
@@ -251,7 +247,7 @@ class MibAp(Mib):
             vs = vars_set.copy()
             i = 0
             
-            while len(vs) > 0:
+            while len(vs) > 0 and i < len(self.ds.descomp):
                 self.ds.descomp[i].setSample()
                 
                 vs = vs - self.ds.descomp[i].getVars()
@@ -264,22 +260,25 @@ class MibAp(Mib):
             if tuple(indv) == values:
                 count_p += 1
             
-            self.resetVars()
+            self.ds.resetVars()
             iteration += 1
             
-        return count_p / self.N
+        return count_p
     
-    def cond(self, vars:tuple, vars_v:tuple, indep_vars:tuple, indep_v:tuple) -> float:
+    def margianl(self, vars, values) -> float:
+        return self.sample_marginal(vars, values) / self.N
+    
+    def sample_cond(self, vars:tuple, values:tuple, indep_vars:tuple, indep_values:tuple) -> tuple:
         iteration = 0
         count = 0
         count_N = 0
-        vars_set = set(vars)
+        vars_set = set(vars).union(set(indep_vars))
         
         while iteration < self.N:
             vs = vars_set.copy()
             i = 0
             
-            while len(vs) > 0:
+            while len(vs) > 0 and i < len(self.ds.descomp):
                 self.ds.descomp[i].setSample()
                 
                 vs = vs - self.ds.descomp[i].getVars()
@@ -289,7 +288,7 @@ class MibAp(Mib):
             for v in indep_vars:
                 indv_indep.append(v.event)
                 
-            if tuple(indv_indep) == indep_v:
+            if tuple(indv_indep) == indep_values:
                 count_N += 1
                 
                 indv = []
@@ -297,16 +296,19 @@ class MibAp(Mib):
                 for v in vars:
                     indv.append(v.event)
                         
-                if tuple(indv) == vars_v:
+                if tuple(indv) == values:
                     count += 1
             
-            self.resetVars()
+            self.ds.resetVars()
             iteration += 1
         
-        if count_N == 0: 
-            return 0
-        
-        return count / count_N
+        return count, count_N
+
+    def cond(self, vars, values, indep, indep_values):
+        i,n = self.sample_cond(vars, values, indep, indep_values)
+        if n == 0 or i == 0 :
+            return 1/self.N
+        return i / n
 
     def joint_marginal(self, vars1, values1, vars2, values2):
         vars = tuple(list(vars1) + list(vars2))
@@ -340,4 +342,134 @@ class MibAp(Mib):
                     table[ei][ev] = self.cond(vars_column, ev, indep_column, ei)
                     
             return Distrib(table, vars_column, indep_column)
+
+class MibMpap(MibAp):
+    def __init__(self, ds, process_n, N):
+        self.process_n = process_n
+        super().__init__(ds, N)
         
+    def sample_margianl_p(self, ds:Specification, vars:tuple, values:tuple, count_q:mp.Queue, N:int) -> None:
+        mib = MibAp(ds,N)
+        
+        count = mib.sample_marginal(vars, values)
+        
+        count_q.put(count)
+    
+    def sample_cond_p(self, ds:Specification, vars, values, i_vars, i_values, count_q:mp.Queue, countN_q:mp.Queue,N) -> None:
+        mib = MibAp(ds, N)
+        
+        count, countN = mib.sample_cond(vars, values, i_vars, i_values)
+        
+        count_q.put(count)
+        countN_q.put(countN)
+    
+    def margianl(self, vars:tuple, values:tuple) -> float:
+        N = math.ceil(self.N / self.process_n)
+
+        processes = []
+        count_q = mp.Queue()
+        for i in range(self.process_n):
+            vars_copy = set([Var(v.name, v.values) for v in self.ds.vars])
+            
+            name2var = {}
+            for v in vars_copy:
+                name2var[v.name] = v
+            
+            vars_mc = tuple([name2var[v.name] for v in vars])    
+            descomp_copy = []
+           
+            for d in self.ds.descomp:
+                d_vars = tuple([name2var[v.name] for v in d.vars]) 
+                if d.parents:
+                    d_parents = tuple([name2var[v.name] for v in d.parents])   
+                    descomp_copy.append(Distrib(d.table, d_vars, d_parents))
+                else:
+                    descomp_copy.append(Distrib(d.table, d_vars))
+            ds_copy = Specification(vars_copy, tuple(descomp_copy))   
+               
+            process = mp.Process(
+                target=self.sample_margianl_p,
+                args=(
+                    ds_copy,
+                    vars_mc, 
+                    values, 
+                    count_q,
+                    N
+                )
+            )
+            processes.append(process)
+        
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join()
+        
+        count = 0
+        while not count_q.empty():
+            count+=count_q.get()
+        if count == 0:
+            return 1 / self.N
+        return count / (self.process_n * N)
+    
+    def cond(self, vars:tuple, values:tuple, indep_vars, indep_values) -> float:
+        N = math.ceil(self.N / self.process_n)
+
+        processes = []
+        count_q = mp.Queue()
+        countN_q = mp.Queue()
+        
+        for i in range(self.process_n):
+            vars_copy = set([Var(v.name, v.values) for v in self.ds.vars])
+            
+            name2var = {}
+            for v in vars_copy:
+                name2var[v.name] = v
+            
+            vars_mc = tuple([name2var[v.name] for v in vars])    
+            vars_ic = tuple([name2var[v.name] for v in indep_vars])  
+            descomp_copy = []
+           
+            for d in self.ds.descomp:
+                d_vars = tuple([name2var[v.name] for v in d.vars]) 
+                if d.parents: 
+                    d_parents = tuple([name2var[v.name] for v in d.parents])    
+                    descomp_copy.append(Distrib(d.table, d_vars, d_parents))
+                else:
+                    descomp_copy.append(Distrib(d.table, d_vars))
+            ds_copy = Specification(vars_copy, tuple(descomp_copy))   
+               
+            process = mp.Process(
+                target=self.sample_cond_p,
+                args=(
+                    ds_copy,
+                    vars_mc, 
+                    values,
+                    vars_ic,
+                    indep_values,
+                    count_q,
+                    countN_q,
+                    N
+                )
+            )
+            processes.append(process)
+        
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join()
+        
+        countN = 0
+        while not countN_q.empty():
+            countN+=countN_q.get()
+        if countN == 0:
+            return 1/self.N
+        
+        count = 0
+        while not count_q.empty():
+            count+=count_q.get()
+        if count == 0:
+            return 1/self.N
+        
+        return count / countN
+    
+    
