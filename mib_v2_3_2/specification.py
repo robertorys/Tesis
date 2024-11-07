@@ -10,9 +10,16 @@ class Specification:
         Specification(set,tuple) -> nuevo objeto Distrib
     """
     
-    def __init__(self, vars:set, descomp:tuple) -> None:
+    def __init__(self, vars:set, descomp:set) -> None:
         self.vars = vars
         self.descomp = descomp
+        
+        t_descompo = []
+        
+        for d in self.descomp:
+            t_descompo.append((d.level,d))
+        
+        self.Bn = sorted(t_descompo, key=lambda x: x[0])
     
     def getVar(self, name) -> Var:
         for v in self.vars:

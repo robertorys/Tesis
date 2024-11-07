@@ -366,4 +366,7 @@ La tarea básica de cualquier sistema de inferencia probabilística es calcular 
 En el capitulo 12 se explico que cualquier probabilidad condicional puede ser calculada sumando términos de la distribución conjunta. Mas específicamente, una consulta P(X|e) pude ser respondida usando la ecuación ((1.8) [[AIMA#1.4. Inference using full joint distributions]]), el cual repetimos por conveniencia:
 
 $$ P(X|e) = \alpha P(X,e) = \alpha \sum_{y}{P(X,e,y)}$$
-Ahora, una red de Bayes tiene una representación completa de la distribución conjunta total. Específicamente, la ecuación (13.2)  muentra que los terminos $P(x,e,y)$ en la distribución conjunta puede ser escrita como el producto de probabilidades conjuntas de la red. Por lo tanto, *una 'query" puede ser contestada usando una red de Bayes calculando las sumas de los productos de la probabilidad condicionales de la red.*  
+Ahora, una red de Bayes tiene una representación completa de la distribución conjunta total. Específicamente, la ecuación (13.2)  muestra que los terminos $P(x,e,y)$ en la distribución conjunta puede ser escrita como el producto de probabilidades conjuntas de la red. Por lo tanto, *una 'query" puede ser contestada usando una red de Bayes calculando las sumas de los productos de la probabilidad condicionales de la red.*  
+
+### 13.4 Approximate Inference for Bayesian Networks
+Dada la imposibilidad de realizar inferencias exactas en redes grandes, ahora consideraremos métodos de inferencia aproximada.
