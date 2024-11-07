@@ -1,4 +1,5 @@
-from mib_v2_3_2.var import Var
+from mib_v2_3_3.var import Var
+from mib_v2_3_3.bayesian_network import nodo
 
 class Specification:
     """ Clase el manejo de la especificación de un pragrama Bayesiano.
@@ -10,17 +11,10 @@ class Specification:
         Specification(set,tuple) -> nuevo objeto Distrib
     """
     
-    def __init__(self, vars:set, descomp:set) -> None:
+    def __init__(self, vars:set, bn:set) -> None:
         self.vars = vars
-        self.descomp = descomp
+        self.bn = bn
         
-        t_descompo = []
-        
-        """ for d in self.descomp:
-            t_descompo.append((d.level,d))
-        
-        self.Bn = sorted(t_descompo, key=lambda x: x[0]) """
-    
     def getVar(self, name) -> Var:
         for v in self.vars:
             if name == v.name:

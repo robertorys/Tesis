@@ -1,6 +1,6 @@
 import random
 from itertools import product
-from mib_v2_3_2.var import Var
+from mib_v2_3_3.var import Var
 
 class Distrib:
     """ Clase para el manejo de distibuciones marginales.
@@ -14,20 +14,12 @@ class Distrib:
     Distrib(tuple,dict) -> nuevo objeto Distrib
     """
 
-    def __init__(self, table:dict, vars:tuple, indep:tuple = None) -> None:
+    def __init__(self, name, table:dict, vars:tuple, indep:tuple = None) -> None:
+        self.name = name
         self.table = table
         self.vars = vars
         self.indep = indep
-    
-    def setTree(self, level:int, parents:set = None, children:set = None) -> None:
-        self.parents = None
-        self.children = None
-        self.level = level
-        if children:
-            self.children = children
-        if parents:
-            self.parents = parents 
-    
+
     def P(self) -> float:
         if not self.indep:
             return self._jointP()

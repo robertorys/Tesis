@@ -7,12 +7,12 @@
 from itertools import product
 import multiprocessing as mp
 import math
-from mib_v2_3_2.mib import Mib
-from mib_v2_3_2.var import Var
-from mib_v2_3_2.distrib import Distrib
-from mib_v2_3_2.specification import Specification
+from mib_v2_3_3.mib import Mib
+from mib_v2_3_3.var import Var
+from mib_v2_3_3.distrib import Distrib
+from mib_v2_3_3.specification import Specification
 
-class MibDS(Mib):
+class MibAP(Mib):
     """ Clase para el motor de inferencia bayesiana usando aproximación.
 
         Atributos:
@@ -22,7 +22,7 @@ class MibDS(Mib):
         super().__init__(ds)
         self.N = N
     
-    def sample_marginal(self, vars:tuple, values:tuple) -> int:
+    def direct_sampling(self, vars:tuple, values:tuple) -> int:
         iteration = 0
         count_p = 0
         vars_set = set(vars)
@@ -51,9 +51,9 @@ class MibDS(Mib):
     
     def margianl(self, vars:tuple, values:tuple) -> float:
         
-        return self.sample_marginal(vars, values) / self.N
+        return self.direct_sampling(vars, values) / self.N
     
-    def sample_cond(self, vars:tuple, values:tuple, indep_vars:tuple, indep_values:tuple) -> tuple:
+    def gibbs_sampling(self, vars:tuple, values:tuple, indep_vars:tuple, indep_values:tuple) -> tuple:
         iteration = 0
         count = 0
         count_N = 0
@@ -90,7 +90,7 @@ class MibDS(Mib):
         return count, count_N
 
     def cond(self, vars, values, indep, indep_values):
-        i,n = self.sample_cond(vars, values, indep, indep_values)
+        i,n = self.gibbs_sampling(vars, values, indep, indep_values)
         if n == 0 or i == 0 :
             return 1/self.N
         return i / n
@@ -128,21 +128,21 @@ class MibDS(Mib):
                     
             return Distrib(table, vars_column, indep_column)
 
-class MibDSMp(MibDS):
+class MibApMp(MibAP):
     
     def __init__(self, ds, process_n, N):
         self.process_n = process_n
         super().__init__(ds, N)
         
     def sample_margianl_p(self, ds:Specification, vars:tuple, values:tuple, count_q:mp.Queue, N:int) -> None:
-        mib = MibDS(ds,N)
+        mib = MibAP(ds,N)
         
         count = mib.sample_marginal(vars, values)
         
         count_q.put(count)
     
     def sample_cond_p(self, ds:Specification, vars, values, i_vars, i_values, count_q:mp.Queue, countN_q:mp.Queue,N) -> None:
-        mib = MibDS(ds, N)
+        mib = MibAP(ds, N)
         
         count, countN = mib.sample_cond(vars, values, i_vars, i_values)
         
@@ -217,8 +217,8 @@ class MibDSMp(MibDS):
            
             for d in self.ds.descomp:
                 d_vars = tuple([name2var[v.name] for v in d.vars]) 
-                if d.indep: 
-                    d_parents = tuple([name2var[v.name] for v in d.indep])    
+                if d.parents: 
+                    d_parents = tuple([name2var[v.name] for v in d.parents])    
                     descomp_copy.append(Distrib(d.table, d_vars, d_parents))
                 else:
                     descomp_copy.append(Distrib(d.table, d_vars))
