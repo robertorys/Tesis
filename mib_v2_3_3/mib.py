@@ -1,13 +1,9 @@
-#==============================================================================
-#title          : Mib.py
-#description    : Motor de inferencia bayesiano para variables discretas.
-#version        : 2.3.2
-#python_version : 3.10.12
-#==============================================================================
-from itertools import product
 from mib_v2_3_3.var import Var
 from mib_v2_3_3.distrib import Distrib
 from mib_v2_3_3.specification import Specification
+from itertools import product
+import multiprocessing as mp
+import math
 
 class Mib:
     """ Clase para el motor de inferencia bayesiana.
@@ -19,25 +15,13 @@ class Mib:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def probability(self, known:set, hidden_vars:set) -> float:
+    def probability(self, hidden_vars:tuple) -> float:
         """ Método para hacer el calculo de la marginal.
             
         Returns:
             float: Valor de la probabilidad de la marginal.
         """
-        descompK = set()
-        
-        for d in self.ds.descomp:
-            if d.check(known):
-                descompK.add(d)
-        
         sum = 0
-        p = 1
-        if len(descompK) > 0:
-            for d in descompK:
-                p *= d.P()
-            
-        descomp = set(self.ds.descomp) - descompK
         
         for key in product(*self.ds.getValues(hidden_vars)):
             # Establecer los valores de los eventos.
@@ -48,20 +32,20 @@ class Mib:
         
             # Calcular la probabilidad con los valores de k.
             p_i = 1
-            for d in descomp:
+            for d in self.ds.descomp:
                 p_i *= d.P()
             
             sum += p_i
     
         self.ds.resetVars()
-        return p * sum
+        return sum
  
     def marginal(self, vars:tuple, values:tuple) -> float:
         """ Método para hacer la consulta de una marginal.
 
         Args:
-            vars (tuple): Tupla con las varibales para la marginal.
-            values (tuple): Tupla con los valores de las varibales para la marginal.
+            vars (tuple): Tupla con las varibales.
+            values (tuple): Tupla con los valores de las varibales.
 
         Returns:
             float: Valor de la probabilidad de la marginal.
@@ -70,9 +54,9 @@ class Mib:
         for var in vars:
             var.event = values[i]
             i += 1
-        knwon = set(vars)
-        hidden = self.ds.vars - knwon
-        return self.probability(knwon, hidden)
+        
+        hidden = self.ds.vars - set(vars)
+        return self.probability(tuple(hidden))
     
     def joint_marginal(self, vars1:tuple, values1:tuple, vars2:tuple, values2:tuple) -> float:
         """ Método para calcular la marginal sobre dos cunjontos de variables.
@@ -84,23 +68,23 @@ class Mib:
             values1 (tuple): Tupla con los valores del segundo conjunto.
 
         Returns:
-            float: Valor de la probabilidad de la marginal.
+            float: Valor de la probabilidad de la conjunta.
         """
-        i = 0
-        for var in vars1:
-            var.event = values1[i]
-            i += 1
-            
-        i = 0
-        for var in vars2:
-            var.event = values2[i]
-            i += 1
-            
-        knwon = set(vars1).union(vars2)
-        hidden = self.ds.vars - knwon
-        return self.probability(knwon, hidden)
+        return self.marginal(vars1+vars2, values1+values2)
     
     def cond(self, vars:tuple, values:tuple, indep:tuple, indep_values:tuple) -> float:
+        """ Método para hacer la consulta de una condicional.
+
+        Args:
+            vars (tuple): Tupla con las varibales dependientes.
+            values (tuple): Tupla con los valores de las varibales dependientes.
+            indep (tuple): Tupla con las varibales independientes.
+            indep_values (tuple): Tupla con los valores de las varibales independientes.
+
+        Returns:
+            float: Valor de la probabilidad de la condicional.
+        """
+        
         p_var_indep = self.joint_marginal(vars, values, indep, indep_values)
         p_indep = self.marginal(indep, indep_values)
         return p_var_indep / p_indep
@@ -171,27 +155,20 @@ class Mib:
         """
         vars_column = tuple([v.name for v in vars])
         
-        vars_values = [v.values for v in vars]
+        values_values = [v.values for v in vars]
         
         p = 0
         value_vars = None
-        for hyp in product(*vars_values):
+        den = self.marginal(indep, indep_values)
+        for hyp in product(*values_values):
             
-            p_hyp = self.joint_marginal(vars, hyp, indep, indep_values)
+            p_hyp = self.joint_marginal(vars, hyp, indep, indep_values) / den
             
-            if p > 0:
-                if p_hyp > p:
-                    p = p_hyp
-                    value_vars = hyp
-            else: 
+            if p_hyp > p:
                 p = p_hyp
                 value_vars = hyp
-                
-        den = self.marginal(indep, indep_values)
-        if den == 0:
-            return vars_column, value_vars, p
-                               
-        return vars_column, value_vars, p / den
+                      
+        return vars_column, value_vars, p
     
     def obs_inference(self, vars:tuple, vars_values:tuple, indep:tuple) -> tuple:
         """ Método para inferir el valor más probable de una obersvación de una distribución condicional
@@ -214,18 +191,11 @@ class Mib:
         indep_value = None
         for obs in product(*indep_values):
             p_obs = self.joint_marginal(vars, vars_values, indep, obs)
-
-            if p > 0:
-                if p_obs / p > 1:
-                    p = p_obs
-                    indep_value = obs
-            else:
+            
+            if p / p_obs < 1:
                 p = p_obs
                 indep_value = obs
                 
         return indep_column, indep_value, p / self.marginal(indep, indep_value)
 
-        
-        
-            
-            
+    

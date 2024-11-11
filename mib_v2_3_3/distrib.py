@@ -1,6 +1,6 @@
+from mib_v2_3_3.var import Var
 import random
 from itertools import product
-from mib_v2_3_3.var import Var
 
 class Distrib:
     """ Clase para el manejo de distibuciones marginales.
@@ -13,61 +13,49 @@ class Distrib:
     
     Distrib(tuple,dict) -> nuevo objeto Distrib
     """
-
-    def __init__(self, name, table:dict, vars:tuple, indep:tuple = None) -> None:
-        self.name = name
+    
+    def __init__(self, table:dict, vars:tuple, parents:tuple=None):
         self.table = table
         self.vars = vars
-        self.indep = indep
-
-    def P(self) -> float:
-        if not self.indep:
-            return self._jointP()
+        self.parents = parents
+        self.Parents = set()
+        self.Children = set()
+        
+        if self.parents:
+            self.name = f"P({self.vars}|{self.parents})"
         else:
-            return self._condP()
+            self.name = f"P({self.vars})"
     
-    def _jointP(self) -> float:
+    def setChildren(self, dists_children:set) -> None:
+        self.Children = dists_children
+    
+    def getVars(self) -> set:
+        vars = set(self.vars)
+        if self.parents:
+            vars = vars.union(set(self.parents))
+        return vars
+    
+    def P(self) -> float:
+        if not self.parents:
+            return self.__jointP()
+        else:
+            return self.__condP()
+    
+    def __jointP(self) -> float:
         key = [v.event for v in self.vars]
         return self.table[tuple(key)]
     
-    def _condP(self) -> float:
+    def __condP(self) -> float:
         vars_key = [v.event for v in self.vars]
-        indep_key = [v.event for v in self.indep]
-        return self.table[tuple(indep_key)][tuple(vars_key)]
+        parents_key = [v.event for v in self.parents]
+        return self.table[tuple(parents_key)][tuple(vars_key)]
     
     def check(self, knwon:set) -> bool:
         vars = set(self.vars)
-        if self.indep:
-            vars = vars.union(set(self.indep))
+        if self.parents:
+            vars = vars.union(set(self.parents))
         
         if len(vars.difference(knwon)) == 0:
             return True
         
         return False
-    
-    def getVars(self) -> set:
-        vars = set(self.vars)
-        if self.indep:
-            vars = vars.union(set(self.indep))
-        return vars
-    
-    def setSample(self) -> None:
-        if self.indep:
-            indep_key = tuple([v.event for v in self.indep])
-            values = list(product(*[v.values for v in self.vars]))
-            probabilitys = []
-            for key in product(*[v.values for v in self.vars]):
-                probabilitys.append(self.table[indep_key][key])
-            
-            value = random.choices(values, probabilitys, k=1)[0]
-        else:
-            values = list(product(*[v.values for v in self.vars]))
-            probabilitys = []
-            for key in values:
-                probabilitys.append(self.table[key])
-            
-            value = random.choices(values, probabilitys, k=1)[0]
-            
-        for i,v in enumerate(self.vars):
-                v.event = value[i]
-

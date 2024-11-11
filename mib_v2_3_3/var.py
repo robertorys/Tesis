@@ -7,7 +7,7 @@ class Var:
         
     Var(any,set) -> Nuevo objeto Var.
     """
-    def __init__(self, name, values:set) -> None:
+    def __init__(self,name,values:set):
         self.name = name
         self.values = values
         self.event = None
@@ -25,3 +25,4 @@ class Var:
     
     def reset(self) -> None:
         self.event = None
+    

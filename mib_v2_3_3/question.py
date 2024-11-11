@@ -1,6 +1,6 @@
 from mib_v2_3_3.specification import Specification
 from mib_v2_3_3.mib import Mib
-from mib_v2_3_3.mibAp import MibAP
+from mib_v2_3_3.mibAp import MibAp
 from mib_v2_3_3.mibAp import MibApMp
 
 class Question:
@@ -13,7 +13,7 @@ class Question:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def _DQ(self, mib:Mib | MibAP | MibApMp, vars:set, indep:set = None):
+    def _DQ(self, mib:Mib | MibAp | MibApMp, vars:set, indep:set = None):
         if not indep:
             return mib.distrib_inference(vars)
         else:
@@ -34,14 +34,14 @@ class Question:
             return self._DQ(mib, vars, indep)
         else:
             if process_n == 1:
-                mib = MibAP(self.ds, N)
+                mib = MibAp(self.ds, N)
                 return self._DQ(mib, vars, indep)
             else:
-                mib = MibApMp(self.ds, process_n, N)
+                mib = MibApMp(self.ds, N, process_n)
                 return self._DQ(mib, vars, indep)
                 
     
-    def _Q(self, mib:Mib | MibAP | MibApMp, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
+    def _Q(self, mib:Mib | MibAp | MibApMp, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
         if not indep:
             if vars_values:
                 return mib.marginal(vars, vars_values)
@@ -74,9 +74,9 @@ class Question:
             return self._Q(mib, vars, indep, vars_values, indep_values)
         else:
             if process_n == 1:
-                mib = MibAP(self.ds, N)
+                mib = MibAp(self.ds, N)
                 return self._Q(mib, vars, indep, vars_values, indep_values)
             else:
-                mib = MibApMp(self.ds, process_n, N)
+                mib = MibApMp(self.ds, N, process_n)
                 return self._Q(mib, vars, indep, vars_values, indep_values)
     
