@@ -23,6 +23,12 @@ class Var:
         else:
             return list(self.values)
     
+    def getCard(self) -> int:
+        if self.event:
+            return 1
+        else:
+            return len(self.values)
+    
     def reset(self) -> None:
         self.event = None
     

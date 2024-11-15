@@ -15,27 +15,30 @@ class Mib:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def probability(self, hidden_vars:tuple) -> float:
+    def probability(self, uknown:set) -> float:
         """ Método para hacer el calculo de la marginal.
             
+        Args:
+            uknown (set): Conjunto de las variables desconocidas.
         Returns:
             float: Valor de la probabilidad de la marginal.
         """
         sum = 0
+        uknown = tuple([u for u in uknown])
         
-        for key in product(*self.ds.getValues(hidden_vars)):
+        for key in product(*self.ds.getValues(uknown)):
             # Establecer los valores de los eventos.
             i = 0
-            for v in hidden_vars:
+            for v in uknown:
                 v.event = key[i]
                 i += 1
         
-            # Calcular la probabilidad con los valores de k.
-            p_i = 1
+            # Calcular la probabilidad con los valores de key.
+            p = 1
             for d in self.ds.descomp:
-                p_i *= d.P()
+                p *= d.P()
             
-            sum += p_i
+            sum += p
     
         self.ds.resetVars()
         return sum
@@ -54,9 +57,11 @@ class Mib:
         for var in vars:
             var.event = values[i]
             i += 1
+            
+        known = set(vars)
+        uknown = self.ds.vars - known
         
-        hidden = self.ds.vars - set(vars)
-        return self.probability(tuple(hidden))
+        return self.probability(uknown)
     
     def joint_marginal(self, vars1:tuple, values1:tuple, vars2:tuple, values2:tuple) -> float:
         """ Método para calcular la marginal sobre dos cunjontos de variables.
@@ -198,4 +203,3 @@ class Mib:
                 
         return indep_column, indep_value, p / self.marginal(indep, indep_value)
 
-    

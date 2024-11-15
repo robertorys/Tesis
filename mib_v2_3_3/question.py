@@ -1,7 +1,8 @@
 from mib_v2_3_3.specification import Specification
 from mib_v2_3_3.mib import Mib
 from mib_v2_3_3.mibAp import MibAp
-from mib_v2_3_3.mibAp import MibApMp
+from mib_v2_3_3.mibMp import MibMp
+from mib_v2_3_3.mibMp import MibApMp
 
 class Question:
     """ Clase para generar preguntas y generar consultas para responder.
@@ -13,7 +14,7 @@ class Question:
     def __init__(self, description: Specification) -> None:
         self.ds = description
     
-    def _DQ(self, mib:Mib | MibAp | MibApMp, vars:set, indep:set = None):
+    def _DQ(self, mib:Mib | MibAp | MibApMp | MibMp, vars:set, indep:set = None):
         if not indep:
             return mib.distrib_inference(vars)
         else:
@@ -30,18 +31,19 @@ class Question:
             Distrib : Distribución consultada.
         """
         if not aproximation:
-            mib = Mib(self.ds)
-            return self._DQ(mib, vars, indep)
+            if process_n == 1:
+                mib = Mib(self.ds)
+            else:
+                mib = MibMp(self.ds, process_n)
         else:
             if process_n == 1:
                 mib = MibAp(self.ds, N)
-                return self._DQ(mib, vars, indep)
             else:
                 mib = MibApMp(self.ds, N, process_n)
-                return self._DQ(mib, vars, indep)
-                
+        
+        return self._DQ(mib, vars, indep)       
     
-    def _Q(self, mib:Mib | MibAp | MibApMp, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
+    def _Q(self, mib:Mib | MibAp | MibApMp | MibAp, vars:tuple, indep:tuple = None, vars_values:tuple = None, indep_values:tuple = None):
         if not indep:
             if vars_values:
                 return mib.marginal(vars, vars_values)
@@ -70,13 +72,16 @@ class Question:
             tuple : Tupla con los datos de la consulta.
         """
         if not aproximation:
-            mib = Mib(self.ds)
-            return self._Q(mib, vars, indep, vars_values, indep_values)
+            if process_n == 1:
+                mib = Mib(self.ds)
+            else:
+                mib = MibMp(self.ds, process_n)
+
         else:
             if process_n == 1:
                 mib = MibAp(self.ds, N)
-                return self._Q(mib, vars, indep, vars_values, indep_values)
             else:
                 mib = MibApMp(self.ds, N, process_n)
-                return self._Q(mib, vars, indep, vars_values, indep_values)
+            
+        return self._Q(mib, vars, indep, vars_values, indep_values)
     
