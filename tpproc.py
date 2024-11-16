@@ -3,11 +3,75 @@ import sys
 import pandas as pd
 import nltk
 nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('averaged_perceptron_tagger_eng')
 from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.util import bigrams
 
 ####################################
 #        cargado de Cuentos        #
 ####################################
+    
+def carga_cuentos_(files, encoding='utf-8'):
+    stories = []    
+    
+    for fileName in files:
+        with open(fileName, encoding=encoding) as f:
+            content = f.readlines()
+            content = [line.strip() for line in content]
+        stories.append(content)
+    
+    return stories
+
+def lee_cuentos_(stories, test=False):
+    stopWords = set(stopwords.words('spanish'))
+    
+    storyInfo = []
+    
+    if not test:
+        columnas = ['titulo','tipo','autor','tokens','bigramas']
+    else:
+        columnas = ['titulo','tokens','bigramas'] 
+    
+    for content in stories:
+        if not test:
+            title = ''
+            title = content[0].lower()
+            type = content[1].strip("[]").split()[0].lower()
+            autor = content[2].lower()
+            text = ''
+            for line in content[3:-1]:
+                text += line
+        else:
+            title = content[0].lower()
+            text = ''
+            for line in content[1:-1]:
+                text += line
+        
+        tokens = nltk.word_tokenize(text)
+        # Etiquetar las palabras con sus POS
+        etiquetas_pos = nltk.pos_tag(tokens)
+        
+        pos = [epos[1] for epos in etiquetas_pos]
+        bigramas = list(bigrams(pos))
+
+        # Quitar stop words y signos de puntuación
+        tokens_limpios = [
+            palabra.lower() for palabra in tokens
+            if palabra.lower() not in stopWords and palabra not in string.punctuation
+        ]
+        
+        if not test:
+            storyInfo.append([title,type,autor,tokens_limpios,bigramas])
+        else:
+            storyInfo.append([title,tokens_limpios,bigramas])  
+        
+        df = pd.DataFrame(storyInfo,columns=columnas)
+    return df
+            
 def carga_cuentos(archivos,encoding='utf-8',tam='KB'): #"ISO-8859-1", MB
     file=[]
     nombres=[]
@@ -61,9 +125,9 @@ def lee_cuentos(cuentos,test=False):
         else:
             titulo = ' '.join(h[0].split())
             texto = h[1:]            
-        r=pd.DataFrame(texto,columns=['cadena'])
-        r=r[r.cadena != '\n'].reset_index()
-        r=r.cadena.str.translate(\
+        r = pd.DataFrame(texto,columns=['cadena'])
+        r = r[r.cadena != '\n'].reset_index()
+        r = r.cadena.str.translate(\
         str.maketrans('','',string.digits))\
         .str.translate(\
         str.maketrans('','',string.punctuation))\
@@ -78,10 +142,10 @@ def lee_cuentos(cuentos,test=False):
         .str.replace('“','')\
         .str.replace('”','')\
         .str.strip()
-        r=r.to_frame()
-        r=r[r.cadena != ''].reset_index()
-        r=r.T
-        r=r.loc['cadena']
+        r = r.to_frame()
+        r = r[r.cadena != ''].reset_index()
+        r = r.T
+        r = r.loc['cadena']
         palabras = r.tolist()[:-1]
         # elimino las stopwords
         text = [w for t in palabras for w in t.split() \
