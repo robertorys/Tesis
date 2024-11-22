@@ -1,5 +1,6 @@
 from mib_v2_3_3.var import Var
 from mib_v2_3_3 import Distrib
+import numpy as np
 
 class Specification:
     """ Clase el manejo de la especificación de un pragrama Bayesiano.
@@ -36,35 +37,37 @@ class Specification:
         for v in self.vars:
             v.reset()   
     
-def Copy(ds:Specification) -> tuple:
-    """ Crea la copia de una especificación.
-
-    Args:
-        ds (Specification): Descripción con la espesificación a copiar.
-    Returns:
-        tuple (Specification, dict): Especificación y diccionario de nombres a variables.
-    """
-    vars_copy = set()
-    for v in ds.vars:
-        v_aux = Var(v.name, v.values)
-        if v.event:
-            v_aux.event = v.event
-        vars_copy.add(v_aux) 
+    def H(self) -> list:
         
-    name2var = {}
+        return np.sum([d.H() for d in self.descomp])
     
-    for v in vars_copy:
-        name2var[v.name] = v  
-    
-    descomp_copy = []
-    for d in ds.descomp:
-        d_vars = tuple([name2var[v.name] for v in d.vars]) 
-        if d.parents:
-            d_parents = tuple([name2var[v.name] for v in d.parents])   
-            descomp_copy.append(Distrib(d.table, d_vars, d_parents))
-        else:
-            descomp_copy.append(Distrib(d.table, d_vars))
-                    
-    ds_copy = Specification(vars_copy, tuple(descomp_copy)) 
-    
-    return ds_copy, name2var
+    def Copy(self) -> tuple:
+        """ Crea la copia de la especificación.
+        Returns:
+            tuple (Specification, dict): Especificación y diccionario de nombres a variables.
+        """
+        vars_copy = set()
+        
+        for v in self.vars:
+            v_aux = Var(v.name, v.values)
+            if v.event:
+                v_aux.event = v.event
+            vars_copy.add(v_aux) 
+            
+        n2v = {}
+        
+        for v in vars_copy:
+            n2v[v.name] = v  
+        
+        descomp_copy = []
+        for d in self.descomp:
+            d_vars = tuple([n2v[v.name] for v in d.vars]) 
+            if d.parents:
+                d_parents = tuple([n2v[v.name] for v in d.parents])   
+                descomp_copy.append(Distrib(d.table, d_vars, d_parents))
+            else:
+                descomp_copy.append(Distrib(d.table, d_vars))
+                        
+        ds_copy = Specification(vars_copy, tuple(descomp_copy)) 
+        
+        return ds_copy, n2v

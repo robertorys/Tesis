@@ -10,10 +10,75 @@ nltk.download('averaged_perceptron_tagger_eng')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.util import bigrams
+from nltk.stem import WordNetLemmatizer
 
 ####################################
 #        cargado de Cuentos        #
 ####################################
+
+def  load_sms(file: str) -> tuple:
+    df = pd.read_csv(file)
+    
+    # Mezclar aleatoriamente los datos
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    # Calcular el índice de separación
+    split_idx = int(0.8 * len(df))
+    
+    # Dividir los datos
+    df_train = df[:split_idx]
+    df_test = df[split_idx+1:-1]
+    
+    return df_train, df_test
+
+def brigramspos(tokens) -> list:
+    # Etiquetar las palabras con sus POS
+    etiquetas_pos = nltk.pos_tag(tokens)
+        
+    pos = [epos[1] for epos in etiquetas_pos]
+    return list(bigrams(pos))
+
+def dfpp(df_train:pd.DataFrame, df_test:pd.DataFrame) -> tuple:
+    stopWords = set(stopwords.words('english'))
+    puntacion_extra = "¡¿“”``’'..."
+    
+    df_train_T = df_train.copy()
+    
+    df_train_T['Tokens'] = df_train_T.Message .\
+        apply(lambda message: nltk.word_tokenize(message))
+        
+    df_train_T['Bigrams'] = df_train_T.Tokens .\
+        apply(lambda tokens: brigramspos(tokens))
+    
+    df_train_T['Tokens'] = df_train_T.Tokens .\
+        apply(lambda tokens: [
+            palabra.lower() for palabra in tokens
+            if palabra.lower() not in stopWords and palabra not in string.punctuation + puntacion_extra
+        ])
+    
+    # Crear el lematizador
+    lemmatizer = WordNetLemmatizer()
+    df_train_T['Tokens'] = df_train_T.Tokens .\
+        apply(lambda tokens: [lemmatizer.lemmatize(palabra) for palabra in tokens])
+    
+    df_test_T = df_test.copy()
+    
+    df_test_T['Tokens'] = df_test_T.Message .\
+        apply(lambda message: nltk.word_tokenize(message))
+        
+    df_test_T['Bigrams'] = df_test_T.Tokens .\
+        apply(lambda tokens: brigramspos(tokens))
+    
+    df_test_T['Tokens'] = df_test_T.Tokens .\
+        apply(lambda tokens: [
+            palabra.lower() for palabra in tokens
+            if palabra.lower() not in stopWords and palabra not in string.punctuation + puntacion_extra
+        ])
+    
+    df_test_T['Tokens'] = df_test_T.Tokens .\
+        apply(lambda tokens: [lemmatizer.lemmatize(palabra) for palabra in tokens])
+    
+    return df_train_T, df_test_T
+    
     
 def carga_cuentos_(files, encoding='utf-8'):
     stories = []    
@@ -59,9 +124,11 @@ def lee_cuentos_(stories, test=False):
         bigramas = list(bigrams(pos))
 
         # Quitar stop words y signos de puntuación
+        puntacion_extra = '¡¿“”'
+        tokens_limpios = nltk.pos_tag(tokens)
         tokens_limpios = [
             palabra.lower() for palabra in tokens
-            if palabra.lower() not in stopWords and palabra not in string.punctuation
+            if palabra.lower() not in stopWords and palabra not in string.punctuation + puntacion_extra
         ]
         
         if not test:
@@ -95,10 +162,6 @@ def carga_cuentos(archivos,encoding='utf-8',tam='KB'): #"ISO-8859-1", MB
             {suma} {tam}')
     return file, nombres
 
-####################################
-#      lectura de documentos       #
-#            Cuentos               #
-####################################
 def lee_cuentos(cuentos,test=False):
     # palabras demasiado frecuentes
     stop_words = set(stopwords.words('spanish'))

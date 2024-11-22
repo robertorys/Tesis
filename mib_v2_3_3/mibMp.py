@@ -1,13 +1,12 @@
 from mib_v2_3_3.mibAp import MibAp
 from mib_v2_3_3.mib import Mib
 from mib_v2_3_3.specification import Specification
-from mib_v2_3_3.specification import Copy
 from mib_v2_3_3.distrib import Distrib
 from mib_v2_3_3.var import Var
 import multiprocessing as mp
+from itertools import product
 
 class MibMp(Mib):
-    
     def __init__(self, description, process_n = 4):
         self.process_n = process_n 
         super().__init__(description)
@@ -15,7 +14,6 @@ class MibMp(Mib):
     def process(self, ds: Specification, uknown:set, p:mp.Queue) -> None:
         mib = Mib(ds)
         p.put(mib.probability(uknown))
-    
         
     def probability(self, uknown) -> float:
         U = list([Var(v.name, v.values) for v in uknown])
@@ -40,7 +38,7 @@ class MibMp(Mib):
         for partition in partitions:
             if len(partition) > 0:
                 names = [v.name for v in partition]
-                ds_copy, n2v = Copy(self.ds)
+                ds_copy, n2v = self.ds.Copy()
                 
                 uknown_p = set()
                 print(f"partición:{[v.name for v in partition]}")
@@ -73,7 +71,6 @@ class MibMp(Mib):
         return p
     
 class MibApMp(MibAp):
-    
     def __init__(self, ds, N, process_n = 4):
         self.process_n = process_n
         super().__init__(ds, N)
@@ -96,7 +93,7 @@ class MibApMp(MibAp):
         processes = []
         count = mp.Queue()
         for i in range(self.process_n):
-            ds_copy, n2v = Copy(self.ds)
+            ds_copy, n2v = self.ds.Copy()
             vars_mc = tuple([n2v[v.name] for v in vars])
             
             process = mp.Process(
@@ -121,13 +118,14 @@ class MibApMp(MibAp):
             count_e += count.get()
         if count_e == 0:
             return 1 / (self.N * self.process_n)
+        
         return count_e / (self.N * self.process_n)
 
-    def cond(self, vars, values, indep, indep_values):
+    def cond(self, vars:tuple, values:tuple, indep:tuple, indep_values:tuple) -> float:
         processes = []
         count = mp.Queue()
         for i in range(self.process_n):
-            ds_copy, n2v = Copy(self.ds)
+            ds_copy, n2v = self.ds.Copy()
             
             vars_mc = tuple([n2v[v.name] for v in vars])    
             indep_mc = tuple([n2v[v.name] for v in indep])     
@@ -156,4 +154,6 @@ class MibApMp(MibAp):
             count_e += count.get()
         if count_e == 0:
             return 1 / (self.N * self.process_n)
+        
         return count_e / (self.N * self.process_n)
+    

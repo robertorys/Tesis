@@ -123,7 +123,7 @@ $P(\neg b|\neg a) = 1$ puede derivarse de $P(a|b)$, usando los postulados de nor
 $$ P(\neg a| \neg b) = 1 - P(a| \neg b)$$ por (2.3)
  $$= 1 - \frac{P(\neg b | a)P(a)}{P(\neg b)}$$
  por (2.8)
- $$= 1 - \frac{(1 - P(b|a))P(a)}{\neg b} $$
+ $$= 1 - \frac{(1 - P(b|a))P(a)}{P(\neg b)} $$
  por(2.3)
  $$ = 1 $$
  porque $P(b|a) = 1$

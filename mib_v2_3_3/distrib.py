@@ -1,6 +1,5 @@
 from mib_v2_3_3.var import Var
-import random
-from itertools import product
+import math
 
 class Distrib:
     """ Clase para el manejo de distibuciones marginales.
@@ -59,3 +58,17 @@ class Distrib:
             return True
         
         return False
+    
+    def H(self) -> float:
+        sum = 0 
+        for value in self.table.values():
+            if type(value) != dict:
+                h_pi = value * math.log(value)
+            else:
+                h_pi = 0
+                for v in value.values():
+                    h_pi += v * math.log2(v)
+                    
+            sum += h_pi
+        
+        return -1 * sum
